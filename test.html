@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="cards.css">
+    <script src="cards.js"></script>
+</head>
+
+<body style="background-color: darkolivegreen;">
+    <div id="s1" class="deckempty cardplaceholder" style="--text-card: 'Set 1'; top: 100px; "></div>
+    <div id="s2" class="deckempty cardplaceholder" style="--text-card: 'Set 2'; top: 100px; left: 200px;"></div>
+    
+    <button id="btn1">Move</button>
+
+    <script>
+        const slot1 = new CT.Slot({
+            pile: [],
+            size: 1,
+            type: "list",
+            domType: "slot-open",
+            domPile: document.querySelector("#s1"),
+            slotname: "s1",
+        });
+
+        const slot2 = new CT.Slot({
+            pile: [],
+            size: 1,
+            type: "list",
+            domType: "slot-open",
+            domPile: document.querySelector("#s2"),
+            slotname: "s2",
+        });
+
+        const card1 = new CT.Card({
+            cardName: "card name",
+        });
+
+        document.getElementById("btn1").onclick = function(ev) {
+            CT.cardMoveSelection(card1, [slot1, slot2], slot1);
+        };
+
+        // slot1.domPile.onclick = function () {
+        //     CT.cardMoveSelection(slot1.pile[0], [slot1, slot2], slot1);
+        // }
+        // slot2.domPile.onclick = function () {
+        //     CT.cardMoveSelection(slot2.pile[0], [slot1, slot2], slot2);
+        // }
+
+        card1.createDom();
+        card1.dom.onclick = function () {
+            CT.cardMoveSelection(card1, [slot1, slot2], card1.slot || null);
+        }
+    </script>
+
+
+</body>
+
+</html>

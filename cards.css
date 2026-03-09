@@ -1,0 +1,115 @@
+:root {
+    --cardwidth: 100px;
+    --cardheight: 150px;
+}
+
+.deck,
+.deckempty,
+.deckselect {
+    position: absolute;
+    min-width: var(--cardwidth);
+    width: var(--cardwidth);
+    height: var(--cardheight);
+    background-color: darkred;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    z-index: 1;
+}
+
+.deckempty {
+    background-color: rgba(60, 54, 46, 0.083);
+    padding: 1px;
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.367);
+    border-radius: 11px;
+    z-index: unset;
+}
+
+.deckselect {
+    background-color: goldenrod;
+    box-shadow: 0px 0px 5px goldenrod;
+    right: 0;
+    top: 0;
+    z-index: 100;
+    box-sizing: border-box;
+    border-color: red;
+    font-size: 3rem;
+    animation: deckselect 1s linear infinite alternate;
+}
+
+@keyframes deckselect {
+    0% {
+        box-shadow: 0px 0px 0px goldenrod;
+        background-color: rgba(218, 165, 32, 0.3);
+    }
+
+    100% {
+        box-shadow: 0px 0px 15px goldenrod;
+        background-color: rgba(255, 166, 0, 0.6);
+    }
+}
+
+.cardplaceholder::before {
+    content: var(--text-card);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
+
+.carddraw {
+    animation: carddraw 0.5s ease-out 1;
+    --animfromx: 10px;
+    --animfromy: 10px;
+}
+
+@keyframes carddraw {
+    0% {
+        transform: translate(var(--animfromx), var(--animfromy));
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+        rotate: 5deg;
+    }
+
+    100% {
+        transform: translate(0px, 0px);
+    }
+}
+
+.card {
+    width: var(--cardwidth);
+    height: var(--cardheight);
+    background-color: white;
+    border: 2px solid black;
+    color: black;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    z-index: 1;
+    transition-duration: 0.5s;
+    position: relative;
+}
+
+.card:hover {
+    box-shadow: 4px 4px 2px gold, -4px -4px 2px gold;
+}

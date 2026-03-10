@@ -1,7 +1,25 @@
+/*
+# Card Game Template
+
+Core styles for the card game UI. Sizes are driven by
+`--cardwidth` and `--cardheight` custom properties, which
+can be updated at runtime via `Card.setCSS()`.
+*/
+
 :root {
     --cardwidth: 100px;
     --cardheight: 150px;
 }
+
+/*
+## Slot Base
+
+Shared styles for deck, empty slot, and selection overlay elements.
+All slot variants share the same card-sized box with rounded corners
+and a centered label.
+
+    <div class="deck">Deck</div>
+*/
 
 .deck,
 .deckempty,
@@ -23,6 +41,14 @@
     z-index: 1;
 }
 
+/*
+## Empty Slot
+
+A faded, flat variant used for slots that have no card in them.
+
+    <div class="deckempty">Empty</div>
+*/
+
 .deckempty {
     background-color: rgba(60, 54, 46, 0.083);
     padding: 1px;
@@ -31,6 +57,16 @@
     border-radius: 11px;
     z-index: unset;
 }
+
+/*
+## Selection Overlay
+
+Highlighted overlay shown on available slots during a card-move
+selection. Pulses with a goldenrod glow via the `deckselect`
+keyframes animation.
+
+    <div class="deckselect">&#x2B07;</div>
+*/
 
 .deckselect {
     background-color: goldenrod;
@@ -56,6 +92,16 @@
     }
 }
 
+/*
+## Card Placeholder
+
+Pseudo-element that displays a label inside an empty slot.
+The label text is set via the `--text-card` custom property
+on the slot element.
+
+    <div class="deckempty cardplaceholder" style="--text-card: 'Hand'"></div>
+*/
+
 .cardplaceholder::before {
     content: var(--text-card);
     position: absolute;
@@ -68,28 +114,14 @@
     font-size: 0.8rem;
 }
 
+/*
+## Card
 
-.carddraw {
-    animation: carddraw 0.5s ease-out 1;
-    --animfromx: 10px;
-    --animfromy: 10px;
-}
+The main playing card element. Sized by the `--cardwidth` /
+`--cardheight` custom properties. Shows a gold glow on hover.
 
-@keyframes carddraw {
-    0% {
-        transform: translate(var(--animfromx), var(--animfromy));
-        opacity: 0;
-    }
-
-    50% {
-        opacity: 1;
-        rotate: 5deg;
-    }
-
-    100% {
-        transform: translate(0px, 0px);
-    }
-}
+    <div class="card">Card Name</div>
+*/
 
 .card {
     width: var(--cardwidth);
@@ -112,4 +144,39 @@
 
 .card:hover {
     box-shadow: 4px 4px 2px gold, -4px -4px 2px gold;
+}
+
+/*
+## Card Draw Animation
+
+Applied by `cardMove()` after moving a card to a new slot.
+Slides the card from its previous position (`--animfromx`,
+`--animfromy`) to its current position with a brief rotation
+and fade-in. Pointer events are disabled during the animation
+to prevent clicks mid-flight.
+*/
+
+.carddraw {
+    animation: carddraw 0.5s ease-out 1;
+    --animfromx: 10px;
+    --animfromy: 10px;
+}
+
+@keyframes carddraw {
+    0% {
+        transform: translate(var(--animfromx), var(--animfromy));
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    50% {
+        opacity: 1;
+        rotate: 5deg;
+        pointer-events: none;
+    }
+
+    100% {
+        transform: translate(0px, 0px);
+        pointer-events: none;
+    }
 }

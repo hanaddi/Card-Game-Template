@@ -1,18 +1,56 @@
 (function (window) {
 
+    /**
+     * Represents a playing card with a visual DOM element.
+     * @property {string} cardName - Display name of the card.
+     * @property {string} colorBg - Background color of the card.
+     * @property {string|null} imgBg - Background image URL, if any.
+     * @property {HTMLDivElement|null} dom - The card's root DOM element, created by {@link Card#createDom}.
+     * @property {string|null} uid - Unique identifier, generated on first {@link Card#createDom} call.
+     * @property {HTMLDivElement} domMenu - Container element reserved for a context menu.
+     */
     class Card {
+
+        /** @type {number} Default card width in pixels. */
+        static cardWidth  = 100;
+        /** @type {number} Default card height in pixels. */
+        static cardHeight = 160;
+
+        /**
+         * Applies {@link Card.cardWidth} and {@link Card.cardHeight} as CSS custom properties
+         * (`--cardwidth`, `--cardheight`) on the document root.
+         */
+        static setCSS() {
+            document.documentElement.style.setProperty('--cardwidth', `${Card.cardWidth}px`);
+            document.documentElement.style.setProperty('--cardheight', `${Card.cardHeight}px`);
+        }
+
+        /**
+         * Creates a new Card instance.
+         * @param {Object} [args={}] - Card properties.
+         * @param {string} [args.cardName="card"] - Display name of the card.
+         * @param {string} [args.colorBg="white"] - Background color.
+         * @param {string|null} [args.imgBg=null] - Background image URL.
+         */
         constructor(args = {}) {
             const options = {
+                cardName : "card",
+                colorBg  : "white",
+                imgBg    : null,
                 ...args,
             };
             this.cardName = options.cardName;
-            this.cardText = options.cardText;
-            this.colorBg = options.colorBg;
+            this.colorBg  = options.colorBg;
+            this.imgBg    = options.imgBg;
 
             this.dom = null;
             this.uid = null;
         }
 
+        /**
+         * Builds (or rebuilds) the card's DOM element, assigning a unique ID on the
+         * first call and rendering the card name, background image, and background color.
+         */
         createDom() {
             // set uid
             if (!this.uid) {
@@ -22,18 +60,19 @@
             this.dom ??= document.createElement("div");
             this.dom.className = "card";
 
-            const domText = document.createElement("span");
-            domText.style.textAlign = "center";
-            domText.textContent = this.cardName || this.cardText;
-            this.dom.appendChild(domText);
-            // if (card.imgbg) {
-            //     card.dom.style.backgroundImage = `url(${card.imgbg})`;
-            //     card.dom.style.backgroundSize = 'cover';
-            //     card.dom.style.backgroundPosition = 'center';
-            //     domText.style.backgroundColor = '#ffffffee';
-            //     domText.style.padding = '10px';
-            //     domText.style.borderRadius = '5px';
-            // }
+            this.dom.domText ??= document.createElement("span");
+            this.dom.domText.style.textAlign = "center";
+            this.dom.domText.textContent = this.cardName;
+            this.dom.appendChild(this.dom.domText);
+
+            if (this.imgBg) {
+                this.dom.style.backgroundImage = `url(${this.imgBg})`;
+                this.dom.style.backgroundSize = 'cover';
+                this.dom.style.backgroundPosition = 'center';
+                // this.dom.domText.style.backgroundColor = '#ffffffee';
+                // this.dom.domText.style.padding = '10px';
+                // this.dom.domText.style.borderRadius = '5px';
+            }
 
             if (this.colorBg) {
                 this.dom.style.backgroundColor = this.colorBg;
@@ -161,32 +200,36 @@
         let bbox1 = { x: 0, y: 0 }, bbox2 = { x: 0, y: 0 };
 
         // remove from source
-        if (slotSource && slotSource.type == 'list') {
-            const idx1 = slotSource.pile.indexOf(card);
-            if (idx1 >= 0) {
-                slotSource.pile.splice(idx1, 1);
-                bbox1 = card.dom.getBoundingClientRect();
-                if (slotSource.domType == 'list') {
-                    slotSource.domPile.removeChild(card.dom);
-                } else if (slotSource.domType == 'slot-open') {
-                    slotSource.domPile.replaceChildren(document.createTextNode(''));
+        if (slotSource) {
+            if (slotSource.type == 'list') {
+                const idx1 = slotSource.pile.indexOf(card);
+                if (idx1 >= 0) {
+                    slotSource.pile.splice(idx1, 1);
+                    bbox1 = card.dom.getBoundingClientRect();
+                    if (slotSource.domType == 'list') {
+                        slotSource.domPile.removeChild(card.dom);
+                    } else if (slotSource.domType == 'slot-open') {
+                        slotSource.domPile.replaceChildren(document.createTextNode(''));
+                    }
                 }
+            } else if (slotSource.type == 'slot') {
+                slotSource.pile = null;
             }
-        } else if (slotSource.type == 'slot') {
-            slotSource.pile = null;
         }
 
         // add to target
-        if (slotTarget && slotTarget.type == 'list') {
-            slotTarget.pile.push(card);
-            if (slotTarget.domType == 'list') {
-                slotTarget.domPile.appendChild(card.dom);
-            } else if (slotTarget.domType == 'slot-open') {
-                slotTarget.domPile.replaceChildren(card.dom);
+        if (slotTarget) {
+            if (slotTarget.type == 'list') {
+                slotTarget.pile.push(card);
+                if (slotTarget.domType == 'list') {
+                    slotTarget.domPile.appendChild(card.dom);
+                } else if (slotTarget.domType == 'slot-open') {
+                    slotTarget.domPile.replaceChildren(card.dom);
+                }
+                bbox2 = card.dom.getBoundingClientRect();
+            } else if (slotTarget.type == 'slot') {
+                slotTarget.pile = card;
             }
-            bbox2 = card.dom.getBoundingClientRect();
-        } else if (slotTarget.type == 'slot') {
-            slotTarget.pile = card;
         }
 
         // // Adjust visibility

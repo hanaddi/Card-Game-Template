@@ -12,6 +12,7 @@
 <body style="background-color: darkolivegreen;">
     <div id="s1" class="deckempty cardplaceholder" style="--text-card: 'Set 1'; top: 100px; "></div>
     <div id="s2" class="deckempty cardplaceholder" style="--text-card: 'Set 2'; top: 100px; left: 200px;"></div>
+    <div id="s3" class="deckempty cardplaceholder" style="--text-card: 'Set 2'; top: 100px; left: 600px;"></div>
     
     <button id="btn1">Move</button>
 
@@ -34,12 +35,21 @@
             slotname: "s2",
         });
 
+        const slot3 = new CT.Slot({
+            pile: [],
+            size: 1,
+            type: "list",
+            domType: "slot-open",
+            domPile: document.querySelector("#s3"),
+            slotname: "s3",
+        });
+
         const card1 = new CT.Card({
             cardName: "card name",
         });
 
         document.getElementById("btn1").onclick = function(ev) {
-            CT.cardMoveSelection(card1, [slot1, slot2], slot1);
+            CT.cardMoveSelection(card1, [slot1, slot2, slot3]);
         };
 
         // slot1.domPile.onclick = function () {
@@ -51,7 +61,7 @@
 
         card1.createDom();
         card1.dom.onclick = function () {
-            CT.cardMoveSelection(card1, [slot1, slot2], card1.slot || null);
+            CT.cardMoveSelection(card1, [slot1, slot2, slot3], card1.slot || null);
         }
     </script>
 

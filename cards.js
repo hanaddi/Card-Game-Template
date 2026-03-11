@@ -43,8 +43,9 @@
             this.colorBg  = options.colorBg;
             this.imgBg    = options.imgBg;
 
-            this.dom = null;
-            this.uid = null;
+            this.dom  = null;
+            this.uid  = null;
+            this.slot = null;
         }
 
         /**
@@ -98,6 +99,22 @@
             // card.dom.addEventListener("mouseover", () => showCardDetails(card));
 
         }
+
+        /**
+         * Adds the `card-highlight` CSS class to the card's DOM element,
+         * giving it an animated gold-and-orange glow.
+         */
+        highlightOn() {
+            this.dom.classList.add("card-highlight");
+        }
+
+        /**
+         * Removes the `card-highlight` CSS class from the card's DOM element,
+         * returning it to its default appearance.
+         */
+        highlightOff() {
+            this.dom.classList.remove("card-highlight");
+        }
     }
 
     class Slot {
@@ -145,7 +162,6 @@
                 slotTarget.domSelector.style.removeProperty("animation");
             }
             if (!callback) callback = cardMove;
-            // if (!callback) callback = () => { };
             slotTarget.domSelector.onclick = () => {
                 if (slotTarget == slotSource) {
                     // move to itself, cancel the operation
@@ -153,13 +169,14 @@
                     return;
                 }
                 callback(card, slotSource, slotTarget);
-                // TODO: Implement later
-                // if ([slotTarget, slotSource].includes(moveableObj.hand1.pile)) {
-                //     domAdjustCardsInHand(moveableObj.hand1.pile);
-                // }
-                // if ([slotTarget, slotSource].includes(moveableObj.hand2.pile)) {
-                //     domAdjustCardsInHand(moveableObj.hand2.pile);
-                // }
+
+                if (slotTarget.domType === "list") {
+                    slotAdjustCards(slotTarget);
+                }
+                if (slotSource && slotSource.domType === "list") {
+                    slotAdjustCards(slotSource);
+                }
+
                 cardMoveSelectionCancel(slotTargets);
             };
             slotTarget.domPile.appendChild(slotTarget.domSelector);
@@ -257,6 +274,31 @@
         // updateCopies();
     }
 
+    /**
+     * Adjusts the horizontal spacing of cards in a list-type slot.
+     * When the pile exceeds the stacking threshold, each card's
+     * right margin is set to a negative value so they overlap and
+     * fit within the available space.
+     * @param {Slot} slot - The slot whose cards should be repositioned.
+     */
+    function slotAdjustCards(slot) {
+        const maxCardUnstack = 7;
+        const pile = slot.pile;
+        pile.forEach(card => {
+            if (!card.dom) {
+                domCreateCard(card);
+            }
+
+            if (pile.length <= maxCardUnstack) {
+                card.dom.style.marginRight = "0px";
+            } else {
+                const cardWidth = card.dom.offsetWidth;
+                const ratio = 1 - maxCardUnstack / pile.length;
+                card.dom.style.marginRight = `${-cardWidth * ratio}px`;
+            }
+        });
+    }
+
     window.CT = {
         Card: Card,
         Slot: Slot,
@@ -264,6 +306,7 @@
         cardMoveSelection: cardMoveSelection,
         cardMoveSelectionCancel: cardMoveSelectionCancel,
         cardMove: cardMove,
+        slotAdjustCards: slotAdjustCards,
     };
 
 })(window);

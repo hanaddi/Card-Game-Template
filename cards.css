@@ -78,6 +78,7 @@ keyframes animation.
     border-color: red;
     font-size: 3rem;
     animation: deckselect 1s linear infinite alternate;
+    width: 100%;
 }
 
 @keyframes deckselect {
@@ -144,6 +145,9 @@ The main playing card element. Sized by the `--cardwidth` /
 
 .card:hover {
     box-shadow: 4px 4px 2px gold, -4px -4px 2px gold;
+    /* transform-origin: center center; */
+    /* transform: scale(1.2); */
+    z-index: 2;
 }
 
 /*
@@ -179,4 +183,66 @@ to prevent clicks mid-flight.
         transform: translate(0px, 0px);
         pointer-events: none;
     }
+}
+
+/*
+## Card Highlight
+
+Adds a bold gold-and-orange glow around a card to draw attention.
+Toggled via `Card.highlightOn()` / `Card.highlightOff()`. The
+`::before` pseudo-element animates a rotating box-shadow for a
+pulsing, eye-catching effect.
+
+    <div class="card card-highlight">Highlighted</div>
+*/
+
+.card-highlight {
+    border-color: gold;
+    box-shadow: -8px 8px 12px gold, 8px -8px 12px gold, -8px -8px 12px orange, 8px 8px 12px orange;
+    z-index: 11;
+}
+
+.card-highlight::before {
+    animation: card-highlight 2s linear infinite alternate;
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+@keyframes card-highlight {
+    0% {
+        box-shadow: 8px 8px 12px gold, -8px -8px 12px red;
+    }
+
+    50% {
+        box-shadow: -8px 8px 12px red, 8px -8px 12px gold;
+    }
+
+    100% {
+        box-shadow: -8px -8px 12px gold, 8px 8px 12px red;
+    }
+}
+
+/*
+## Deck List
+
+A horizontal flex container used for list-type slots that display
+multiple cards side by side. Positioned absolutely at the bottom-left
+of its parent. Cards inside will stack with negative margins when the
+pile exceeds the `maxCardUnstack` threshold (see `slotAdjustCards()`).
+
+    <div class="decklist">
+        <div class="card">A</div>
+        <div class="card">B</div>
+    </div>
+*/
+
+.decklist {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    min-width: var(--cardwidth);
+    height: var(--cardheight);
 }

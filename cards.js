@@ -31,17 +31,26 @@
          * @param {string} [args.cardName="card"] - Display name of the card.
          * @param {string} [args.colorBg="white"] - Background color.
          * @param {string|null} [args.imgBg=null] - Background image URL.
+         * TODO: param {function|null} [args.createDom]
+         * TODO: add doc for new params
          */
         constructor(args = {}) {
             const options = {
-                cardName : "card",
-                colorBg  : "white",
-                imgBg    : null,
+                cardName  : "card",
+                colorBg   : "white",
+                imgBg     : null,
+                createDom : null,
+                isOpen    : true, // Is the card face open
                 ...args,
             };
             this.cardName = options.cardName;
             this.colorBg  = options.colorBg;
             this.imgBg    = options.imgBg;
+            this.isOpen   = options.isOpen;
+
+            if (options.createDom) {
+                this.createDom = options.createDom;
+            }
 
             this.dom  = null;
             this.uid  = null;
@@ -60,11 +69,17 @@
 
             this.dom ??= document.createElement("div");
             this.dom.className = "card";
+            this.dom.classList.add(this.isOpen? "card-open" : "card-close");
+
+            // Front face
+            this.domFront ??= document.createElement("div");
+            this.domFront.classList.add("face-front");
+            this.dom.appendChild(this.domFront);
 
             this.dom.domText ??= document.createElement("span");
             this.dom.domText.style.textAlign = "center";
             this.dom.domText.textContent = this.cardName;
-            this.dom.appendChild(this.dom.domText);
+            this.domFront.appendChild(this.dom.domText);
 
             if (this.imgBg) {
                 this.dom.style.backgroundImage = `url(${this.imgBg})`;
@@ -78,6 +93,13 @@
             if (this.colorBg) {
                 this.dom.style.backgroundColor = this.colorBg;
             }
+
+            // Back face
+            this.domBack ??= document.createElement("div");
+            this.domBack.classList.add("face-back");
+            this.domBack.style.backgroundColor = "yellow";
+            this.dom.appendChild(this.domBack);
+            this.domBack.innerHTML = `<div>Back</div>`;
 
             // if (card.hasOwnProperty('hpVal')) {
             //     const domHp = document.createElement('div');
@@ -94,10 +116,42 @@
             // }
 
             this.domMenu = document.createElement("div");
-            // card.domMenu.classList.add("cardmenu");
-            // card.dom.appendChild(card.domMenu);
+            this.domMenu.classList.add("cardmenu");
+            this.dom.appendChild(this.domMenu);
             // card.dom.addEventListener("mouseover", () => showCardDetails(card));
 
+            // Enable moving card
+            this.domMenuMove = document.createElement("div");
+            this.domMenuMove.classList.add("cardmenuitem");
+            this.domMenuMove.textContent = "Move";
+            this.domMenuMove.onclick = () => {
+                cardMoveSelection(this, Slot.instances, this.slot || null);
+                window.setTimeout(() => domMenuShow(null, document.querySelectorAll("div:has(.cardmenu)")), 50);
+            }
+            this.domMenu.appendChild(this.domMenuMove);
+
+        }
+
+        // TODO: add documentation
+        faceFlip() {
+            this.isOpen = !this.isOpen;
+            this.dom.classList.remove(!this.isOpen? "card-open" : "card-close");
+            this.dom.classList.remove("flip");
+            void this.dom.offsetWidth; // force reflow
+            this.dom.classList.add(this.isOpen? "card-open" : "card-close");
+            this.dom.classList.add("flip");
+        }
+
+        // TODO: add documentation
+        faceOpen() {
+            this.isOpen = false;
+            return this.faceFlip();
+        }
+
+        // TODO: add documentation
+        faceClose() {
+            this.isOpen = true;
+            return this.faceFlip();
         }
 
         /**
@@ -118,6 +172,8 @@
     }
 
     class Slot {
+        static instances = [];
+
         constructor(args = {}) {
             const options = {
                 ...args,
@@ -130,8 +186,12 @@
             this.slotName = options.slotName;
 
             this.domSelector = null;
+
+            Slot.instances.push(this);
         }
     }
+
+    let slotsMoveSelection = null;
 
     /**
      * Opens a selection UI for choosing which slot to move a card into.
@@ -141,6 +201,11 @@
      * @param {function|null} [callback=null] - Called after the card has been moved.
      */
     function cardMoveSelection(card, slotTargets, slotSource = null, callback = null) {
+
+        if (slotsMoveSelection) {
+            cardMoveSelectionCancel(slotsMoveSelection);
+        }
+        slotsMoveSelection = slotTargets;
 
         slotTargets.forEach(slotTarget => {
             if (slotTarget != slotSource && slotTarget.type == "list" && slotTarget.size > 0 && slotTarget.pile.length >= slotTarget.size) {
@@ -160,6 +225,7 @@
                 slotTarget.domSelector.innerHTML = "&#x2B07;";
                 slotTarget.domSelector.style.removeProperty("font-size");
                 slotTarget.domSelector.style.removeProperty("animation");
+                slotTarget.domPile.appendChild(slotTarget.domSelector);
             }
             if (!callback) callback = cardMove;
             slotTarget.domSelector.onclick = () => {
@@ -179,7 +245,7 @@
 
                 cardMoveSelectionCancel(slotTargets);
             };
-            slotTarget.domPile.appendChild(slotTarget.domSelector);
+            // slotTarget.domPile.appendChild(slotTarget.domSelector);
         });
     }
 
@@ -211,6 +277,7 @@
             card.createDom();
         }
         card.dom.classList.remove('carddraw');
+        card.dom.classList.remove("flip");
         void card.dom.offsetWidth;
 
         card.dom.style.marginRight = "0";
@@ -224,6 +291,22 @@
                     slotSource.pile.splice(idx1, 1);
                     bbox1 = card.dom.getBoundingClientRect();
                     if (slotSource.domType == 'list') {
+
+                        // Poor animation
+                        const clone = card.dom.cloneNode(false);
+                        clone.style.opacity = "0";
+                        clone.style.pointerEvent = "none";
+                        slotSource.domPile.insertBefore(clone, card.dom);
+                        clone.style.transitionDuration = "1s";
+                        window.setTimeout(()=>{
+                            clone.style.borderWidth = "0px";
+                            clone.style.width = "0px";
+                            clone.style.height = "0px";
+                        }, 10);
+                        window.setTimeout(()=>{
+                            slotSource.domPile.removeChild(clone);
+                        }, 2000);
+
                         slotSource.domPile.removeChild(card.dom);
                     } else if (slotSource.domType == 'slot-open') {
                         slotSource.domPile.replaceChildren(document.createTextNode(''));
@@ -248,14 +331,6 @@
                 slotTarget.pile = card;
             }
         }
-
-        // // Adjust visibility
-        // if (["hand2", "hand1", "deck1", "deck2", "tactical1", "tactical2"].includes(slotTarget.name)) {
-        //     card.visibility = [mapSlotName[slotTarget.name]];
-        // }
-        // if (["hero1_1", "hero2_1", "hero1_2", "hero2_2", "hero1_3", "hero2_3", "recycle1", "recycle2"].includes(slotTarget.name)) {
-        //     card.visibility = ['p1', 'p2'];
-        // }
 
         // // Adjust card menu
         // setCardMenu(card, slotTarget, window.playerCode);
@@ -299,6 +374,21 @@
         });
     }
 
+    function domMenuShow(dom, nodeList = []) {
+        nodeList.forEach(element => {
+            if (!element.contains(dom)) {
+                if (element.querySelector(".cardmenu")) {
+                    // domMenuHide(element.querySelector(".cardmenu"));
+                    element.querySelector(".cardmenu").style.display = "none";
+                }
+            }
+        });
+
+        if (dom) {
+            dom.style.display = "flex";
+        }
+    }
+
     window.CT = {
         Card: Card,
         Slot: Slot,
@@ -307,6 +397,7 @@
         cardMoveSelectionCancel: cardMoveSelectionCancel,
         cardMove: cardMove,
         slotAdjustCards: slotAdjustCards,
+        domMenuShow: domMenuShow,
     };
 
 })(window);

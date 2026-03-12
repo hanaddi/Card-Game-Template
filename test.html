@@ -55,13 +55,11 @@
             slotName: "s4",
         });
 
-        const card1 = new CT.Card({
-            cardName: "card name",
-        });
-
+        let count = 0;
         document.getElementById("btn1").onclick = function(ev) {
             const card1 = new CT.Card({
-                cardName: "card name",
+                cardName: "card " + (++count),
+                isOpen: Math.random() > .5,
             });
             card1.createDom();
             card1.dom.onclick = function () {
@@ -73,14 +71,35 @@
         // slot1.domPile.onclick = function () {
         //     CT.cardMoveSelection(slot1.pile[0], [slot1, slot2], slot1);
         // }
-        // slot2.domPile.onclick = function () {
-        //     CT.cardMoveSelection(slot2.pile[0], [slot1, slot2], slot2);
-        // }
+        
+        function deckClickHandler(dom) {
+            if (dom.classList && (
+                dom.classList.contains("deck")
+                || dom.classList.contains("card")
+            )) {
+                const domMenu = dom.querySelector(".cardmenu")
+                if (domMenu) {
+                    CT.domMenuShow(
+                        domMenu,
+                        document.querySelectorAll("div:has(.cardmenu)")
+                    )
+                    return;
+                }
+            }
 
-        card1.createDom();
-        card1.dom.onclick = function () {
-            CT.cardMoveSelection(card1, [slot1, slot2, slot3, slot4], card1.slot || null);
+            if (dom.parentNode) {
+                return deckClickHandler(dom.parentNode);
+            }
+
+            CT.domMenuShow(
+                null,
+                document.querySelectorAll("div:has(.cardmenu)")
+            )
         }
+        // document.addEventListener("click", (e) => {
+        //     deckClickHandler(e.target);
+        // });
+
     </script>
 
 

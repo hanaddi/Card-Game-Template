@@ -12,6 +12,7 @@
         .card {
             /* transition-duration: 0s; */
             position: absolute;
+            box-sizing: border-box;
         }
 
         .carddraw {
@@ -31,92 +32,16 @@
     <div id="s1" class="deckempty cardplaceholder" style="--text-card: 'Set 1'; top: 100px; "></div>
     <div id="s2" class="deckempty cardplaceholder" style="--text-card: 'Set 2'; top: 100px; left: 200px;"></div>
     <div id="s3" class="deckempty cardplaceholder" style="--text-card: 'Set 2'; top: 100px; left: 600px;"></div>
-
+    
     <div id="s4" class="deckempty" style="top: 300px; "></div>
+    <div id="s5" class="deckempty cardplaceholder" style="--text-card: 'Set 5'; top: 300px; left: 800px;"></div>
 
     <button id="btn1">Draw</button>
 
     <script>
-        class Slot extends CT.Slot {
-            // constructor(args) {
-            //     super(args);
-            //     const options = {
-            //         ...args,
-            //     };
-            // }
-        }
-
-        // function cardMove(card, slotSource = null, slotTarget = null) {
-        //     if (!card) {
-        //         return;
-        //     }
-        //     if (!card.dom) {
-        //         card.createDom();
-        //     }
-
-        //     if (slotSource && slotSource.pile.has(card)) {
-        //         slotSource.pile.delete(card);
-        //         card.slot = null;
-        //         slotSource.domPile.removeChild(card.dom);
-        //         slotTidyX(slotSource);
-        //     }
-            
-        //     if (slotTarget) {
-        //         slotTarget.pile.add(card);
-        //         card.slot = slotTarget;
-        //         slotTarget.domPile.appendChild(card.dom);
-
-        //         card.left ??= 0;
-        //         card.top  ??= 0;
-        //         if (slotSource) {
-        //             const bBoxSource = slotSource.domPile.getBoundingClientRect();
-        //             const bBoxTarget = slotTarget.domPile.getBoundingClientRect();
-
-        //             card.left += bBoxSource.x - bBoxTarget.x;
-        //             card.top  += bBoxSource.y - bBoxTarget.y;
-        //         } else {
-        //             card.left = (slotTarget.widthCard -.99)  * CT.Card.cardWidth
-        //         }
-        //         card.dom.style["transition-duration"] = "0s";
-        //         card.dom.style.left = card.left + "px";
-        //         card.dom.style.top  = card.top  + "px";
-        //         // card.bBox = card.dom.getBoundingClientRect();
-        //         window.setTimeout(slotTidyX, 50, slotTarget);
-
-        //     }
-        // }
-
-        // function slotTidyX(slot) {
-        //     if (slot.pile.size === 0) return;
-        //     const cards = [...slot.pile].sort((a,b) => {
-        //         const aBox = a.bBox || a.dom.getBoundingClientRect();
-        //         const bBox = b.bBox || b.dom.getBoundingClientRect();
-        //         if (aBox.x < bBox.x) {
-        //         }
-        //         a.bBox = null;
-        //         b.bBox = null;
-        //         return aBox.x - bBox.x;
-        //     })
-
-        //     const offsetUnit = Math.min(1, slot.pile.size === 1 ? 1 : (slot.widthCard - 1) / (slot.pile.size - 1));
-        //     for (const i in cards) {
-        //         const card = cards[i];
-        //         card.dom.style["z-index"] = i;
-        //         card.zIndex = i;
-
-        //         card.left = i * offsetUnit * CT.Card.cardWidth;
-        //         card.top = 0;
-        //         card.dom.style.left = card.left + "px";
-        //         card.dom.style.top  = card.top  + "px";
-        //         card.dom.style.removeProperty("transition-duration");
-        //     }
-        //     // for (const card of cards) {
-        //     //     window.setTimeout(() => slot.domPile.appendChild(card.dom), 2000);
-        //     // }
-        // }
-    </script>
-    <script>
-        const slot1 = new Slot({
+        CT.Card.cardWidth  = 100;
+        CT.Card.cardHeight = 100;
+        const slot1 = new CT.Slot({
             pile: [],
             size: 1,
             type: "list",
@@ -126,25 +51,26 @@
             widthCard: 1,
         });
 
-        const slot2 = new Slot({
+        const slot2 = new CT.Slot({
             pile: [],
-            size: 1,
+            size: CT.Card.maxCards,
             type: "list",
             domType: "slot-open",
             domPile: document.querySelector("#s2"),
             slotName: "s2",
         });
 
-        const slot3 = new Slot({
+        const slot3 = new CT.Slot({
             pile: [],
-            size: 1,
+            size: 2,
             type: "list",
             domType: "slot-open",
             domPile: document.querySelector("#s3"),
             slotName: "s3",
+            widthCard: 2,
         });
 
-        const slot4 = new Slot({
+        const slot4 = new CT.Slot({
             pile: [],
             size: 100,
             type: "list",
@@ -154,9 +80,21 @@
             widthCard: 7,
         });
 
+        const slot5 = new CT.Slot({
+            pile: [],
+            size: 20,
+            type: "list",
+            domType: "slot-open",
+            domPile: document.querySelector("#s5"),
+            slotName: "s3",
+            widthCard: 1,
+            heightCard: 5,
+        });
+
         let offsetX = 0;
         let offsetY = 0;
         let cardMoving = null;
+        let slotsHover = new Set();
         function cardFuncOnPointerDown(ev) {
             let el = ev.target;
             while (!el.ctCard) {
@@ -177,12 +115,30 @@
                 cardMoving = null;
                 return;
             }
-            let el = ev.target;
-            while (!el.ctCard) {
-                if (!el.parentElement) return;
-                el = el.parentElement;
+            if (!cardMoving) {
+                return;
             }
-            if (el != cardMoving) return;
+
+            const elsHover = document.elementsFromPoint(ev.clientX, ev.clientY);
+            const slotsHoverNew = new Set();
+            for (const elHover of elsHover) {
+                if (elHover.ctSlot && elHover.ctSlot != cardMoving.ctCard.slot && elHover.ctSlot.pile.size < elHover.ctSlot.size) {
+                    elHover.ctSlot.domPile.classList.add("deckallow");
+                    slotsHoverNew.add(elHover.ctSlot);
+                }
+                if (elHover.ctSlot && elHover.ctSlot != cardMoving.ctCard.slot && elHover.ctSlot.pile.size >= elHover.ctSlot.size) {
+                    elHover.ctSlot.domPile.classList.add("deckrestrict");
+                    slotsHoverNew.add(elHover.ctSlot);
+                }
+            }
+            for (const slotHover of slotsHover) {
+                if (!slotsHoverNew.has(slotHover)) {
+                    slotHover.domPile.classList.remove("deckallow");
+                    slotHover.domPile.classList.remove("deckrestrict");
+                }
+            }
+            slotsHover = slotsHoverNew;
+            const el = cardMoving;
 
             const tx = ev.clientX - offsetX;
             const ty = ev.clientY - offsetY;
@@ -194,27 +150,30 @@
             el.style.top  = (el.ctCard.top  + ty) + "px";
         }
         function cardFuncOnPointerUp(ev) {
+            
+            for (const slotHover of slotsHover) {
+                slotHover.domPile.classList.remove("deckallow");
+                slotHover.domPile.classList.remove("deckrestrict");
+            }
+            slotsHover.clear();
+
             if (!cardMoving) {
                 return;
             }
             let el = cardMoving;
-            // el.style.removeProperty("left");
-            // el.style.removeProperty("top");
             cardMoving = null;
-            // let el = ev.target;
-            // while (!el.ctCard) {
-            //     if (!el.parentElement) return;
-            //     el = el.parentElement;
-            // }
             el.style.pointerEvents = "none";
 
             const targets = document.elementsFromPoint(ev.clientX, ev.clientY);
-            // el.style.removeProperty("z-index");
             el.style.removeProperty("pointer-events");
+            let isTidy = true;
             for (const target of targets) {
                 if (!target.ctSlot) continue;
                 if (el.ctCard.slot == target.ctSlot) continue; // to itself
-                if (target.ctSlot.pile.length >= target.ctSlot.size) continue; // full
+                if (target.ctSlot.pile.size >= target.ctSlot.size) {
+                    isTidy = false;
+                    continue; // full
+                }
 
                 
             
@@ -231,12 +190,12 @@
                 return;
             }
             el.style.removeProperty("transition-duration");
-            // slotTidyX(el.ctCard.slot);
-            el.ctCard.slot.tidyX();
+            if (isTidy) {
+                el.ctCard.slot.tidy();
+            }
             el.style["z-index"] = el.ctCard.slotIndex;
             el.style.left = el.ctCard.left + "px";
             el.style.top  = el.ctCard.top  + "px";
-            // el.style.removeProperty("animation");
 
         }
 
@@ -251,7 +210,6 @@
             card1.dom.addEventListener("pointerdown", cardFuncOnPointerDown);
             card1.dom.addEventListener("pointermove", cardFuncOnPointerMove);
             card1.dom.addEventListener("pointerup", cardFuncOnPointerUp);
-            // CT.cardMove(card1, null, slot2);
             card1.move(slot2);
         };
         CT.Card.setCSS();

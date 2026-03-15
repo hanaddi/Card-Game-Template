@@ -67,29 +67,83 @@ keyframes animation.
 
     <div class="deckselect">&#x2B07;</div>
 */
-
 .deckselect {
-    background-color: goldenrod;
-    box-shadow: 0px 0px 5px goldenrod;
-    right: 0;
-    top: 0;
-    z-index: 100;
-    box-sizing: border-box;
-    border-color: red;
+    background-color: orange;
+    box-shadow: 0px 0px 5px orange;
+    border-color: darkorange;
     font-size: 3rem;
     animation: deckselect 1s linear infinite alternate;
-    width: 100%;
 }
 
 @keyframes deckselect {
     0% {
-        box-shadow: 0px 0px 0px goldenrod;
-        background-color: rgba(218, 165, 32, 0.3);
+        box-shadow: 0px 0px 0px orange;
+        background-color: rgba(255, 165, 0, 0.3);
     }
 
     100% {
-        box-shadow: 0px 0px 15px goldenrod;
-        background-color: rgba(255, 166, 0, 0.6);
+        box-shadow: 0px 0px 15px darkorange;
+        background-color: rgba(255, 140, 0, 0.6);
+    }
+}
+
+/*
+## Allow Overlay
+
+Highlighted overlay shown on valid target slots during a card-move
+selection. Pulses with a green glow via the `deckallow` keyframes
+animation to indicate the slot accepts the card.
+
+    <div class="deckallow">&#x2B07;</div>
+*/
+
+.deckallow {
+    background-color: forestgreen;
+    box-shadow: 0px 0px 5px forestgreen;
+    border-color: limegreen;
+    font-size: 3rem;
+    animation: deckallow 1s linear infinite alternate;
+}
+
+@keyframes deckallow {
+    0% {
+        box-shadow: 0px 0px 0px forestgreen;
+        background-color: rgba(34, 139, 34, 0.3);
+    }
+
+    100% {
+        box-shadow: 0px 0px 15px limegreen;
+        background-color: rgba(34, 139, 34, 0.6);
+    }
+}
+
+/*
+## Restrict Overlay
+
+Highlighted overlay shown on restricted slots during a card-move
+selection. Pulses with a red glow via the `deckrestrict` keyframes
+animation to indicate the slot does not accept the card.
+
+    <div class="deckrestrict">&#x26D4;</div>
+*/
+
+.deckrestrict {
+    background-color: crimson;
+    box-shadow: 0px 0px 5px crimson;
+    border-color: red;
+    font-size: 3rem;
+    animation: deckrestrict 1s linear infinite alternate;
+}
+
+@keyframes deckrestrict {
+    0% {
+        box-shadow: 0px 0px 0px crimson;
+        background-color: rgba(220, 20, 60, 0.3);
+    }
+
+    100% {
+        box-shadow: 0px 0px 15px red;
+        background-color: rgba(220, 20, 60, 0.6);
     }
 }
 
@@ -153,8 +207,22 @@ The main playing card element. Sized by the `--cardwidth` /
 }
 
 /*
-TODO: Add documentation
+## Card Face (Front & Back)
+
+Inner layers of a two-sided card. Both faces are absolutely
+positioned to fill the `.card` container. By default both are
+visible; adding `.card-close` hides the front face and adding
+`.card-open` hides the back face. The `.flip` class triggers
+a scale-based flip animation (`cardflip`) that briefly collapses
+the card to zero width and cross-fades the visible face using
+the `cardflipshow` / `cardfliphide` keyframes.
+
+    <div class="card card-open">
+        <div class="face-front">Front</div>
+        <div class="face-back">Back</div>
+    </div>
 */
+
 .face-front, .face-back {
     display: flex;
     align-items: center;
@@ -311,7 +379,20 @@ pile exceeds the `maxCardUnstack` threshold (see `slotAdjustCards()`).
 
 
 /*
-TODO: Add documentation
+## Card Menu
+
+A context-menu dropdown anchored to a card. Positioned above the
+card by default; adding `.cardtop` shifts it below, and `.cardright`
+shifts it to the right side. Contains `.cardmenuitem` children
+that highlight on hover. The menu is hidden (`display: none`) until
+toggled open by JavaScript.
+
+    <div class="card">
+        <div class="cardmenu">
+            <div class="cardmenuitem">Play</div>
+            <div class="cardmenuitem">Discard</div>
+        </div>
+    </div>
 */
 
 .cardmenu {

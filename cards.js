@@ -209,6 +209,14 @@
             this.domPile.style.height = (this.heightCard * CT.Card.cardHeight) + "px";
         }
 
+        tidy() {
+            if (this.heightCard > 1) {
+                this.tidyY();
+            } else if (this.widthCard  >= 1) {
+                this.tidyX();
+            }
+        }
+
         tidyX() {
             const slot = this;
             if (slot.pile.size === 0) return;
@@ -234,80 +242,34 @@
                 card.dom.style.top = card.top + "px";
                 card.dom.style.removeProperty("transition-duration");
             }
-            // for (const card of cards) {
-            //     window.setTimeout(() => slot.domPile.appendChild(card.dom), 2000);
-            // }
         }
-    }
 
-    let slotsMoveSelection = null;
+        tidyY() {
+            const slot = this;
+            if (slot.pile.size === 0) return;
+            const cards = [...slot.pile].sort((a, b) => {
+                const aBox = a.bBox || a.dom.getBoundingClientRect();
+                const bBox = b.bBox || b.dom.getBoundingClientRect();
+                if (aBox.y < bBox.y) {
+                }
+                a.bBox = null;
+                b.bBox = null;
+                return aBox.y - bBox.y;
+            })
 
-    /**
-     * Opens a selection UI for choosing which slot to move a card into.
-     * @param {Card} card - The card to move.
-     * @param {Array<Slot>} slotTargets - Available destination slots.
-     * @param {Slot|null} [slotSource=null] - The slot the card originates from.
-     * @param {function|null} [callback=null] - Called after the card has been moved.
-     */
-    function cardMoveSelection(card, slotTargets, slotSource = null, callback = null) {
+            const offsetUnit = Math.min(1, slot.pile.size === 1 ? 1 : (slot.heightCard - 1) / (slot.pile.size - 1));
+            for (const i in cards) {
+                const card = cards[i];
+                card.dom.style["z-index"] = i;
+                card.slotIndex = i;
 
-        if (slotsMoveSelection) {
-            cardMoveSelectionCancel(slotsMoveSelection);
+                card.top = i * offsetUnit * CT.Card.cardHeight;
+                card.left = 0;
+                card.dom.style.left = card.left + "px";
+                card.dom.style.top = card.top + "px";
+                card.dom.style.removeProperty("transition-duration");
+            }
         }
-        slotsMoveSelection = slotTargets;
-
-        slotTargets.forEach(slotTarget => {
-            if (slotTarget != slotSource && slotTarget.type == "list" && slotTarget.size > 0 && slotTarget.pile.length >= slotTarget.size) {
-                // pile is full
-                return;
-            }
-            if (!slotTarget.domSelector) {
-                slotTarget.domSelector = document.createElement("div");
-                slotTarget.domSelector.classList.add("deckselect");
-            }
-            if (slotTarget == slotSource) {
-                // will move to itself
-                slotTarget.domSelector.innerHTML = "Cancel";
-                slotTarget.domSelector.style.fontSize = "1rem";
-                slotTarget.domSelector.style.animation = "none";
-            } else {
-                slotTarget.domSelector.innerHTML = "&#x2B07;";
-                slotTarget.domSelector.style.removeProperty("font-size");
-                slotTarget.domSelector.style.removeProperty("animation");
-                slotTarget.domPile.appendChild(slotTarget.domSelector);
-            }
-            if (!callback) callback = cardMove;
-            slotTarget.domSelector.onclick = () => {
-                if (slotTarget == slotSource) {
-                    // move to itself, cancel the operation
-                    cardMoveSelectionCancel(slotTargets);
-                    return;
-                }
-                callback(card, slotSource, slotTarget);
-
-                if (slotTarget.domType === "list") {
-                    slotAdjustCards(slotTarget);
-                }
-                if (slotSource && slotSource.domType === "list") {
-                    slotAdjustCards(slotSource);
-                }
-
-                cardMoveSelectionCancel(slotTargets);
-            };
-            // slotTarget.domPile.appendChild(slotTarget.domSelector);
-        });
-    }
-
-    /**
-     * Dismisses the selection UI by removing each slot's selector element from the DOM.
-     * @param {Array<Slot>} slotTargets - The slots whose selector elements should be removed.
-     */
-    function cardMoveSelectionCancel(slotTargets) {
-        slotTargets.forEach(objSlot => {
-            if (objSlot.domSelector && objSlot.domPile.contains(objSlot.domSelector)) {
-                objSlot.domPile.removeChild(objSlot.domSelector);
-            }
-        });
     }
 
 
@@ -330,8 +292,7 @@
             slotSource.pile.delete(card);
             card.slot = null;
             slotSource.domPile.removeChild(card.dom);
-            // slotTidyX(slotSource);
-            slotSource.tidyX();
+            slotSource.tidy();
         }
 
         if (slotTarget) {
@@ -353,39 +314,13 @@
             card.dom.style["transition-duration"] = "0s";
             card.dom.style.left = card.left + "px";
             card.dom.style.top = card.top + "px";
-            // window.setTimeout(slotTidyX, 50, slotTarget.tidyX);
-            window.setTimeout(slotTarget.tidyX.bind(slotTarget), 10);
+            window.setTimeout(slotTarget.tidy.bind(slotTarget), 10);
 
             // card.bBox ??= bBox;
             // card.dom.style.setProperty('--animfromx', `${card.bBox.x - bBox.x}px`);
             // card.dom.style.setProperty('--animfromy', `${card.bBox.y - bBox.y}px`);
 
         }
-    }
-
-    /**
-     * Adjusts the horizontal spacing of cards in a list-type slot.
-     * When the pile exceeds the stacking threshold, each card's
-     * right margin is set to a negative value so they overlap and
-     * fit within the available space.
-     * @param {Slot} slot - The slot whose cards should be repositioned.
-     */
-    function slotAdjustCards(slot) {
-        const maxCardUnstack = 7;
-        const pile = slot.pile;
-        pile.forEach(card => {
-            if (!card.dom) {
-                domCreateCard(card);
-            }
-
-            if (pile.length <= maxCardUnstack) {
-                card.dom.style.marginRight = "0px";
-            } else {
-                const cardWidth = card.dom.offsetWidth;
-                const ratio = 1 - maxCardUnstack / pile.length;
-                card.dom.style.marginRight = `${-cardWidth * ratio}px`;
-            }
-        });
     }
 
     function domMenuShow(dom, nodeList = []) {
@@ -407,10 +342,10 @@
         Card: Card,
         Slot: Slot,
 
-        cardMoveSelection: cardMoveSelection,
-        cardMoveSelectionCancel: cardMoveSelectionCancel,
+        // cardMoveSelection: cardMoveSelection,
+        // cardMoveSelectionCancel: cardMoveSelectionCancel,
+        // slotAdjustCards: slotAdjustCards,
         cardMove: cardMove,
-        slotAdjustCards: slotAdjustCards,
         domMenuShow: domMenuShow,
     };
 

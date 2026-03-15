@@ -12,9 +12,11 @@
     class Card {
 
         /** @type {number} Default card width in pixels. */
-        static cardWidth  = 100;
+        static cardWidth = 100;
         /** @type {number} Default card height in pixels. */
         static cardHeight = 160;
+
+        static maxCards = 2000;
 
         /**
          * Applies {@link Card.cardWidth} and {@link Card.cardHeight} as CSS custom properties
@@ -36,24 +38,26 @@
          */
         constructor(args = {}) {
             const options = {
-                cardName  : "card",
-                colorBg   : "white",
-                imgBg     : null,
-                createDom : null,
-                isOpen    : true, // Is the card face open
+                cardName: "card",
+                colorBg: "white",
+                imgBg: null,
+                createDom: null,
+                isOpen: true, // Is the card face open
+                style: {},
                 ...args,
             };
             this.cardName = options.cardName;
-            this.colorBg  = options.colorBg;
-            this.imgBg    = options.imgBg;
-            this.isOpen   = options.isOpen;
+            this.colorBg = options.colorBg;
+            this.imgBg = options.imgBg;
+            this.isOpen = options.isOpen;
+            this.style = options.style;
 
             if (options.createDom) {
                 this.createDom = options.createDom;
             }
 
-            this.dom  = null;
-            this.uid  = null;
+            this.dom = null;
+            this.uid = null;
             this.slot = null;
         }
 
@@ -69,7 +73,8 @@
 
             this.dom ??= document.createElement("div");
             this.dom.className = "card";
-            this.dom.classList.add(this.isOpen? "card-open" : "card-close");
+            this.dom.classList.add(this.isOpen ? "card-open" : "card-close");
+            this.dom.ctCard = this;
 
             // Front face
             this.domFront ??= document.createElement("div");
@@ -133,12 +138,17 @@
         }
 
         // TODO: add documentation
+        move(slotTarget = null) {
+            return cardMove(this, this.slot || null, slotTarget);
+        }
+
+        // TODO: add documentation
         faceFlip() {
             this.isOpen = !this.isOpen;
-            this.dom.classList.remove(!this.isOpen? "card-open" : "card-close");
+            this.dom.classList.remove(!this.isOpen ? "card-open" : "card-close");
             this.dom.classList.remove("flip");
             void this.dom.offsetWidth; // force reflow
-            this.dom.classList.add(this.isOpen? "card-open" : "card-close");
+            this.dom.classList.add(this.isOpen ? "card-open" : "card-close");
             this.dom.classList.add("flip");
         }
 
@@ -178,7 +188,6 @@
             const options = {
                 ...args,
             };
-            this.pile = options.pile || [];
             this.size = options.size;
             this.type = options.type;
             this.domType = options.domType;
@@ -186,8 +195,48 @@
             this.slotName = options.slotName;
 
             this.domSelector = null;
+            this.domPile.ctSlot = this;
 
             Slot.instances.push(this);
+
+
+            this.pile = new Set(options.pile || []);
+
+            this.widthCard = options.widthCard ?? 3;
+            this.heightCard = options.heightCard ?? 1;
+
+            this.domPile.style.width = (this.widthCard * CT.Card.cardWidth) + "px";
+            this.domPile.style.height = (this.heightCard * CT.Card.cardHeight) + "px";
+        }
+
+        tidyX() {
+            const slot = this;
+            if (slot.pile.size === 0) return;
+            const cards = [...slot.pile].sort((a, b) => {
+                const aBox = a.bBox || a.dom.getBoundingClientRect();
+                const bBox = b.bBox || b.dom.getBoundingClientRect();
+                if (aBox.x < bBox.x) {
+                }
+                a.bBox = null;
+                b.bBox = null;
+                return aBox.x - bBox.x;
+            })
+
+            const offsetUnit = Math.min(1, slot.pile.size === 1 ? 1 : (slot.widthCard - 1) / (slot.pile.size - 1));
+            for (const i in cards) {
+                const card = cards[i];
+                card.dom.style["z-index"] = i;
+                card.slotIndex = i;
+
+                card.left = i * offsetUnit * CT.Card.cardWidth;
+                card.top = 0;
+                card.dom.style.left = card.left + "px";
+                card.dom.style.top = card.top + "px";
+                card.dom.style.removeProperty("transition-duration");
+            }
+            // for (const card of cards) {
+            //     window.setTimeout(() => slot.domPile.appendChild(card.dom), 2000);
+            // }
         }
     }
 
@@ -276,77 +325,42 @@
         if (!card.dom) {
             card.createDom();
         }
-        card.dom.classList.remove('carddraw');
-        card.dom.classList.remove("flip");
-        void card.dom.offsetWidth;
 
-        card.dom.style.marginRight = "0";
-        let bbox1 = { x: 0, y: 0 }, bbox2 = { x: 0, y: 0 };
-
-        // remove from source
-        if (slotSource) {
-            if (slotSource.type == 'list') {
-                const idx1 = slotSource.pile.indexOf(card);
-                if (idx1 >= 0) {
-                    slotSource.pile.splice(idx1, 1);
-                    bbox1 = card.dom.getBoundingClientRect();
-                    if (slotSource.domType == 'list') {
-
-                        // Poor animation
-                        const clone = card.dom.cloneNode(false);
-                        clone.style.opacity = "0";
-                        clone.style.pointerEvent = "none";
-                        slotSource.domPile.insertBefore(clone, card.dom);
-                        clone.style.transitionDuration = "1s";
-                        window.setTimeout(()=>{
-                            clone.style.borderWidth = "0px";
-                            clone.style.width = "0px";
-                            clone.style.height = "0px";
-                        }, 10);
-                        window.setTimeout(()=>{
-                            slotSource.domPile.removeChild(clone);
-                        }, 2000);
-
-                        slotSource.domPile.removeChild(card.dom);
-                    } else if (slotSource.domType == 'slot-open') {
-                        slotSource.domPile.replaceChildren(document.createTextNode(''));
-                    }
-                }
-            } else if (slotSource.type == 'slot') {
-                slotSource.pile = null;
-            }
+        if (slotSource && slotSource.pile.has(card)) {
+            slotSource.pile.delete(card);
+            card.slot = null;
+            slotSource.domPile.removeChild(card.dom);
+            // slotTidyX(slotSource);
+            slotSource.tidyX();
         }
 
-        // add to target
         if (slotTarget) {
-            if (slotTarget.type == 'list') {
-                slotTarget.pile.push(card);
-                if (slotTarget.domType == 'list') {
-                    slotTarget.domPile.appendChild(card.dom);
-                } else if (slotTarget.domType == 'slot-open') {
-                    slotTarget.domPile.replaceChildren(card.dom);
-                }
-                bbox2 = card.dom.getBoundingClientRect();
-            } else if (slotTarget.type == 'slot') {
-                slotTarget.pile = card;
+            slotTarget.pile.add(card);
+            card.slot = slotTarget;
+            slotTarget.domPile.appendChild(card.dom);
+
+            card.left ??= 0;
+            card.top ??= 0;
+            if (slotSource) {
+                const bBoxSource = slotSource.domPile.getBoundingClientRect();
+                const bBoxTarget = slotTarget.domPile.getBoundingClientRect();
+
+                card.left += bBoxSource.x - bBoxTarget.x;
+                card.top += bBoxSource.y - bBoxTarget.y;
+            } else {
+                card.left = (slotTarget.widthCard - .99) * CT.Card.cardWidth
             }
+            card.dom.style["transition-duration"] = "0s";
+            card.dom.style.left = card.left + "px";
+            card.dom.style.top = card.top + "px";
+            // window.setTimeout(slotTidyX, 50, slotTarget.tidyX);
+            window.setTimeout(slotTarget.tidyX.bind(slotTarget), 10);
+
+            // card.bBox ??= bBox;
+            // card.dom.style.setProperty('--animfromx', `${card.bBox.x - bBox.x}px`);
+            // card.dom.style.setProperty('--animfromy', `${card.bBox.y - bBox.y}px`);
+
         }
-
-        // // Adjust card menu
-        // setCardMenu(card, slotTarget, window.playerCode);
-
-        bbox1 = card.bbox || bbox1;
-        // if (["deck1", "deck2", "recycle1", "recycle2"].includes(slotSource.name)) {
-        //     bbox1 = slotSource.domPile.getBoundingClientRect();
-        // }
-        card.dom.style.setProperty('--animfromx', `${(bbox1.x || bbox2.x) - bbox2.x}px`);
-        card.dom.style.setProperty('--animfromy', `${(bbox1.y || bbox2.y) - bbox2.y}px`);
-        card.bbox = bbox2;
-        card.dom.classList.add('carddraw');
-
-        card.slot = slotTarget;
-
-        // updateCopies();
     }
 
     /**

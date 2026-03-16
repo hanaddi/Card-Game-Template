@@ -96,7 +96,7 @@ card.move(hand);
 
 ## Example — Klondike Solitaire
 
-[**Play Solitaire**](https://example.com/solitaire)
+[**Play Solitaire**](https://hanaddi.github.io/Card-Game-Template/examples/solitaire.html)
 
 [![Solitaire screenshot](images/screenshot1.png)](https://example.com/solitaire)
 

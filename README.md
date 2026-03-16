@@ -98,7 +98,7 @@ card.move(hand);
 
 [**Play Solitaire**](https://hanaddi.github.io/Card-Game-Template/examples/solitaire.html)
 
-[![Solitaire screenshot](images/screenshot1.png)](https://example.com/solitaire)
+[![Solitaire screenshot](https://raw.githubusercontent.com/hanaddi/Card-Game-Template/refs/heads/main/images/screenshot1.png)](https://hanaddi.github.io/Card-Game-Template/examples/solitaire.html)
 
 A full Klondike Solitaire game built entirely on the template (`examples/solitaire.html`). Demonstrates card creation with custom DOM, slot nesting (cards containing child slots for tableau columns), drag-and-drop movement, face flipping, and win detection.
 

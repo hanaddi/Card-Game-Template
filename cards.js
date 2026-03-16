@@ -33,8 +33,9 @@
          * @param {string} [args.cardName="card"] - Display name of the card.
          * @param {string} [args.colorBg="white"] - Background color.
          * @param {string|null} [args.imgBg=null] - Background image URL.
-         * TODO: param {function|null} [args.createDom]
-         * TODO: add doc for new params
+         * @param {function|null} [args.createDom=null] - Custom function to replace the default {@link Card#createDom} method.
+         * @param {boolean} [args.isOpen=true] - Whether the card starts face-up (`true`) or face-down (`false`).
+         * @param {Object} [args.style={}] - Inline styles to apply to the card's DOM element.
          */
         constructor(args = {}) {
             const options = {
@@ -137,12 +138,21 @@
 
         }
 
-        // TODO: add documentation
+        /**
+         * Moves this card to the given slot, removing it from its current slot
+         * if present. Delegates to {@link cardMove}.
+         * @param {Slot|null} [slotTarget=null] - The destination slot.
+         */
         move(slotTarget = null) {
             return cardMove(this, this.slot || null, slotTarget);
         }
 
-        // TODO: add documentation
+        /**
+         * Toggles the card between face-up and face-down, swapping the
+         * `card-open` / `card-close` classes and triggering the flip
+         * animation when {@link isAnim} is `true`.
+         * @param {boolean} [isAnim=true] - Whether to play the flip animation.
+         */
         faceFlip(isAnim = true) {
             if (isAnim) {
                 this.dom.style.removeProperty("animation");
@@ -155,13 +165,21 @@
             this.dom.classList.add("flip");
         }
 
-        // TODO: add documentation
+        /**
+         * Flips the card to its face-up state. If the card is already
+         * face-up this still performs a flip (closed then opened).
+         * @param {boolean} [isAnim=true] - Whether to play the flip animation.
+         */
         faceOpen(isAnim = true) {
             this.isOpen = false;
             return this.faceFlip(isAnim);
         }
 
-        // TODO: add documentation
+        /**
+         * Flips the card to its face-down state. If the card is already
+         * face-down this still performs a flip (opened then closed).
+         * @param {boolean} [isAnim=true] - Whether to play the flip animation.
+         */
         faceClose(isAnim = true) {
             this.isOpen = true;
             return this.faceFlip(isAnim);
@@ -332,10 +350,6 @@
             card.dom.style.top = card.top + "px";
             window.setTimeout(slotTarget.tidy.bind(slotTarget), 10);
 
-            // card.bBox ??= bBox;
-            // card.dom.style.setProperty('--animfromx', `${card.bBox.x - bBox.x}px`);
-            // card.dom.style.setProperty('--animfromy', `${card.bBox.y - bBox.y}px`);
-
         }
     }
 
@@ -357,10 +371,6 @@
     window.CT = {
         Card: Card,
         Slot: Slot,
-
-        // cardMoveSelection: cardMoveSelection,
-        // cardMoveSelectionCancel: cardMoveSelectionCancel,
-        // slotAdjustCards: slotAdjustCards,
         cardMove: cardMove,
         domMenuShow: domMenuShow,
     };

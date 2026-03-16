@@ -143,7 +143,10 @@
         }
 
         // TODO: add documentation
-        faceFlip() {
+        faceFlip(isAnim = true) {
+            if (isAnim) {
+                this.dom.style.removeProperty("animation");
+            }
             this.isOpen = !this.isOpen;
             this.dom.classList.remove(!this.isOpen ? "card-open" : "card-close");
             this.dom.classList.remove("flip");
@@ -153,15 +156,15 @@
         }
 
         // TODO: add documentation
-        faceOpen() {
+        faceOpen(isAnim = true) {
             this.isOpen = false;
-            return this.faceFlip();
+            return this.faceFlip(isAnim);
         }
 
         // TODO: add documentation
-        faceClose() {
+        faceClose(isAnim = true) {
             this.isOpen = true;
-            return this.faceFlip();
+            return this.faceFlip(isAnim);
         }
 
         /**
@@ -212,8 +215,21 @@
         tidy() {
             if (this.heightCard > 1) {
                 this.tidyY();
-            } else if (this.widthCard  >= 1) {
+            } else if (this.widthCard  > 1) {
                 this.tidyX();
+            } else {
+                const cards = [...this.pile];
+                for(const i in cards) {
+                const card = cards[i];
+                card.dom.style["z-index"] = i;
+                card.slotIndex = i;
+
+                card.left = 0;
+                card.top = 0;
+                card.dom.style.left = card.left + "px";
+                card.dom.style.top = card.top + "px";
+                card.dom.style.removeProperty("transition-duration");
+                }
             }
         }
 

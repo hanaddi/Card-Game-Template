@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solitaire</title>
+    <link rel="stylesheet" href="../cards.css">
+    <script src="../cards.js"></script>
+
+    <style>
+        .card {
+            /* transition-duration: 0s; */
+            position: absolute;
+            box-sizing: border-box;
+            overflow: visible;
+            border: none;
+            outline: 2px solid black;
+        }
+
+        .card:hover {
+            box-shadow: none;
+        }
+
+        .face-front,
+        .face-back {
+            border-radius: inherit;
+        }
+
+        .face-back {
+            background-color: #e5e5f7 !important;
+            background-image: linear-gradient(30deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7),
+                linear-gradient(150deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7),
+                linear-gradient(30deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7),
+                linear-gradient(150deg, #444cf7 12%, transparent 12.5%, transparent 87%, #444cf7 87.5%, #444cf7),
+                linear-gradient(60deg, #444cf777 25%, transparent 25.5%, transparent 75%, #444cf777 75%, #444cf777),
+                linear-gradient(60deg, #444cf777 25%, transparent 25.5%, transparent 75%, #444cf777 75%, #444cf777);
+            background-size: 20px 35px;
+            background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
+        }
+
+        .carddraw {
+            /* animation: none !important; */
+        }
+
+        .deckallow {
+            outline: dotted 5px orange;
+        }
+
+        .deckempty:hover {
+            z-index: 1000;
+        }
+
+        * {
+            -webkit-user-select: none;
+            /* Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE 10 and IE 11 */
+            user-select: none;
+            /* Standard syntax */
+        }
+
+        /* #slot_stock .dockempty,
+        #slot_waste .dockempty {
+            pointer-events: none !important;
+        } */
+
+        #slot_stock * {
+            pointer-events: none !important;
+         }
+    </style>
+</head>
+
+<body>
+    <button id="btn1">Draw</button>
+    <div style="background-color: forestgreen; position: absolute; width: 900px; height: 600px;">
+        <div id="slot_stock" class="deckempty cardplaceholder" style="--text-card: 'X'; top: 20px; left: 40px;">
+        </div>
+        <div id="slot_waste" class="deckempty cardplaceholder" style="--text-card: 'X'; top: 20px; left: calc(40px + var(--cardwidth) + 14px);"></div>
+
+        <div id="slot_foundation1" class="deckempty cardplaceholder" style="--text-card: '+'; top: 20px; left: calc(40px + 3 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_foundation2" class="deckempty cardplaceholder" style="--text-card: '+'; top: 20px; left: calc(40px + 4 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_foundation3" class="deckempty cardplaceholder" style="--text-card: '+'; top: 20px; left: calc(40px + 5 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_foundation4" class="deckempty cardplaceholder" style="--text-card: '+'; top: 20px; left: calc(40px + 6 * (var(--cardwidth) + 14px));"></div>
+
+        <div id="slot_tableau1" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: 40px;"></div>
+        <div id="slot_tableau2" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 1 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_tableau3" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 2 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_tableau4" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 3 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_tableau5" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 4 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_tableau6" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 5 * (var(--cardwidth) + 14px));"></div>
+        <div id="slot_tableau7" class="deckempty" style="top: calc(20px + var(--cardheight) + 30px); left: calc(40px + 6 * (var(--cardwidth) + 14px));"></div>
+
+        <script>
+            CT.Card.cardWidth = 80;
+            CT.Card.cardHeight = 120;
+            CT.Card.setCSS();
+
+            // BOARD
+            const slot_stock = new CT.Slot({
+                size: 60,
+                domPile: document.querySelector("#slot_stock"),
+                slotName: "slot_stock",
+                widthCard: 1,
+            });
+            const slot_waste = new CT.Slot({
+                size: 60,
+                domPile: document.querySelector("#slot_waste"),
+                slotName: "slot_waste",
+                widthCard: 1,
+            });
+            const slot_tableau = [1, 2, 3, 4, 5, 6, 7].map(
+                n => new CT.Slot({
+                    size: 1,
+                    domPile: document.querySelector("#slot_tableau" + n),
+                    slotName: "slot_tableau" + n,
+                    widthCard: 1,
+                }
+            ));
+            const slot_foundations = [1, 2, 3, 4].map(
+                n => new CT.Slot({
+                    size: 13,
+                    domPile: document.querySelector("#slot_foundation" + n),
+                    slotName: "slot_foundation" + n,
+                    widthCard: 1,
+                }
+            ));
+
+        </script>
+
+        <script>
+            let offsetX = 0;
+            let offsetY = 0;
+            let cardMoving = null;
+            let slotsHover = new Set();
+
+            function checkComplete() {
+                if (slot_foundations.every(s => s.pile.size === s.size)) {
+                    alert(".completed");
+                }
+            }
+
+            function isAllowDrop(card, slot) {
+                if (!slot) return false;
+                if (!card) return false;
+                if (slot.parentCard
+                    && slot.parentCard.slot
+                    && (
+                        slot.parentCard.slot.parentCard
+                        || slot.parentCard.slot.slotName.startsWith("slot_tableau")
+                    )
+                ) {
+                    return isAllowDropTableau(card, slot);
+                }
+                if (slot.slotName.startsWith("slot_tableau")) {
+                    return isAllowDropTableau(card, slot);
+                }
+                if (slot.parentCard) return false;
+
+                if (slot.slotName.startsWith("slot_foundation")) {
+                    return isAllowDropFoundation(card, slot);
+                }
+                if (slot == slot_waste) {
+                    return false;
+                }
+                return true;
+            }
+
+            function isAllowDropTableau(card, slot) {
+                if (!slot) return false;
+                if (!card) return false;
+                if (slot.slotName.startsWith("slot_tableau")) {
+                    return slot.pile.size == 0 && card.solIndex == 13;
+                }
+                if (card.childSlot === slot) return false;
+                if (slot.pile.size >= slot.size) return false; // slot full
+
+                if (!slot.parentCard) return false;
+                const cardParent = slot.parentCard;
+                if (isRed(card.solType) == isRed(cardParent.solType)) return false; // same color
+                if (cardParent.solIndex - card.solIndex !== 1) return false;
+
+                return true;
+            }
+
+            function isAllowDropFoundation(card, slot) {
+                if (slot.pile.size === 0) return card.solIndex == 1;
+
+                const lastCard = [...slot.pile].at(-1);
+                if (lastCard.solType !== card.solType) return false;
+                if (card.solIndex - lastCard.solIndex !== 1) return false;
+                return true;
+            }
+
+            function cardFuncOnPointerDown(ev) {
+                let el = ev.target;
+                while (!el.ctCard) {
+                    if (!el.parentElement) return;
+                    el = el.parentElement;
+                }
+                if (!el.ctCard.isOpen) return;
+                offsetX = ev.clientX;
+                offsetY = ev.clientY;
+                el.style["transition-duration"] = "0s";
+                el.classList.remove("flip");
+                el.style["z-index"] = CT.Card.maxCards;
+                el.style["animation"] = "none";
+                el.setPointerCapture(ev.pointerId);
+                cardMoving = el;
+            }
+
+            function cardFuncOnPointerMove(ev) {
+                if (ev.pressure === 0) {
+                    cardMoving = null;
+                    return;
+                }
+                if (!cardMoving) {
+                    return;
+                }
+
+                const elsHover = document.elementsFromPoint(ev.clientX, ev.clientY);
+                const slotsHoverNew = new Set();
+                for (const elHover of elsHover) {
+                    if (!isAllowDrop(cardMoving.ctCard, elHover.ctSlot)) {
+                        continue;
+                    }
+
+                    if (elHover.ctSlot && elHover.ctSlot != cardMoving.ctCard.slot && elHover.ctSlot.pile.size < elHover.ctSlot.size) {
+                        elHover.ctSlot.domPile.classList.add("deckallow");
+                        slotsHoverNew.add(elHover.ctSlot);
+                    }
+                }
+                for (const slotHover of slotsHover) {
+                    if (!slotsHoverNew.has(slotHover)) {
+                        slotHover.domPile.classList.remove("deckallow");
+                    }
+                }
+                slotsHover = slotsHoverNew;
+                const el = cardMoving;
+
+                const tx = ev.clientX - offsetX;
+                const ty = ev.clientY - offsetY;
+                el.ctCard.left ??= 0;
+                el.ctCard.top ??= 0;
+                el.style.left = (el.ctCard.left + tx) + "px";
+                el.style.top = (el.ctCard.top + ty) + "px";
+            }
+            function cardFuncOnPointerUp(ev) {
+
+                for (const slotHover of slotsHover) {
+                    slotHover.domPile.classList.remove("deckallow");
+                }
+                slotsHover.clear();
+
+                if (!cardMoving) {
+                    return;
+                }
+                let el = cardMoving;
+                cardMoving = null;
+                el.style.pointerEvents = "none";
+
+                const targets = document.elementsFromPoint(ev.clientX, ev.clientY);
+                el.style.removeProperty("pointer-events");
+                let isTidy = true;
+                for (const target of targets) {
+                    if (!target.ctSlot) continue;
+                    if (el.ctCard.slot == target.ctSlot) continue; // to itself
+                    if (!isAllowDrop(el.ctCard, target.ctSlot)) continue; // not allowed
+                    if (target.ctSlot.pile.size >= target.ctSlot.size) {
+                        isTidy = false;
+                        continue; // full
+                    }
+
+                    const tx = ev.clientX - offsetX;
+                    const ty = ev.clientY - offsetY;
+                    el.ctCard.left += tx;
+                    el.ctCard.top += ty;
+
+                    if (el.ctCard.slot.parentCard && !el.ctCard.slot.parentCard.isOpen) {
+                        el.ctCard.slot.parentCard.faceOpen();
+                    }
+                    el.style.removeProperty("transition-duration");
+                    el.ctCard.move(target.ctSlot);
+                    if (el.ctCard.solIndex == 13) {
+                        checkComplete();
+                    }
+                    return;
+                }
+                el.style.removeProperty("transition-duration");
+                if (isTidy) {
+                    // el.ctCard.slot.tidy();
+                }
+                el.style["z-index"] = el.ctCard.slotIndex;
+                el.style.left = el.ctCard.left + "px";
+                el.style.top = el.ctCard.top + "px";
+
+            }
+
+
+
+            // SETUP
+            const HEART = "heart";
+            const DIAMOND = "diamond";
+            const SPADE = "spade";
+            const CLOVER = "clover";
+            const NUMBERS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
+            const ICONS = {
+                [HEART]: "&hearts;",
+                [DIAMOND]: "&diams;",
+                [SPADE]: "&spades;",
+                [CLOVER]: "&clubs;",
+            };
+            const isRed = solType => [HEART, DIAMOND].includes(solType);
+
+            function createDom() {
+                CT.Card.prototype.createDom.bind(this)();
+
+                const domLabel = document.createElement('div');
+                domLabel.innerHTML = `${(NUMBERS[this.solIndex] ?? "-")}${(ICONS[this.solType] ?? "-")}`;
+                const color = [HEART, DIAMOND].includes(this.solType) ? "red" : "black";
+                domLabel.setAttribute('style', `font-family: monospace; position: absolute; left: 0; top: 0; padding: 3px; color: ${color}`);
+                this.domFront.appendChild(domLabel);
+                this.domBack.textContent = "";
+
+                this.childSlotDom ??= document.createElement('div');
+                this.childSlotDom.classList.add("deckempty");
+                this.childSlotDom.style.top    = "21%";
+                this.childSlotDom.style.border = "none";
+                this.childSlotDom.style.backgroundColor = "transparent";
+                this.dom.appendChild(this.childSlotDom);
+                this.childSlot = new CT.Slot({
+                    size: 1,
+                    domPile: this.childSlotDom,
+                    slotName: "slot_card_" + this.uid,
+                    widthCard: 1,
+                });
+                this.childSlot.parentCard = this;
+            }
+
+            let count = 0;
+            const cards = [];
+            function setupCard(ev) {
+                if (++count > 52) return false;
+                const solType = [HEART, SPADE, DIAMOND, CLOVER][(count - 1) / 13 | 0];
+                const solIndex = ((count - 1) % 13) + 1;
+
+                const card = new CT.Card({
+                    // cardName : "card " + (++count),
+                    cardName: "",
+                    createDom: createDom,
+
+                    isOpen: false,
+                });
+                card.solIndex = solIndex;
+                card.solType = solType;
+                card.createDom();
+                card.dom.style["z-index"] = CT.Card.maxCards;
+                card.dom.addEventListener("pointerdown", cardFuncOnPointerDown);
+                card.dom.addEventListener("pointermove", cardFuncOnPointerMove);
+                card.dom.addEventListener("pointerup", cardFuncOnPointerUp);
+                // card.move(slot_waste);
+                return card;
+            };
+            document.getElementById("btn1").onclick = setupCard;
+
+            while(true) {
+                const card = setupCard();
+                if (card) {
+                    card.dom.style["animation"] = "none";
+                    cards.push(card);
+                    continue;
+                }
+                break;
+            }
+            cards.sort(() => Math.random() > 0.5 ? 1 : -1 );
+            for (let i = 1; i <= 7; i++) {
+                let lastSlot = slot_tableau[i - 1]; 
+                for (let j = 1; j <= i; j++) {
+                    const card = cards.pop();
+                    if (i === j) {
+                        card.faceOpen(false);
+                    }
+                    card.move(lastSlot);
+                    lastSlot = card.childSlot;
+                }
+                
+            }
+            for (const card of cards) {
+                card.move(slot_stock);
+            }
+
+            slot_stock.domPile.addEventListener("click", ev => {
+                if (slot_stock.pile.size > 0) {
+                    const card = [...slot_stock.pile].at(-1);
+                    card.dom.style["z-index"] = CT.Card.maxCards;
+                    card.faceOpen();
+                    card.move(slot_waste);
+                    return;
+                }
+
+                for (const card of [...slot_waste.pile].reverse()) {
+                    card.faceClose(false);
+                    card.move(slot_stock);
+                }
+            });
+
+            // while(count <= 52) {
+            //     document.getElementById("btn1").click();
+            // }
+        </script>
+
+</body>
+
+</html>

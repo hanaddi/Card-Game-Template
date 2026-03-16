@@ -234,22 +234,23 @@ the `cardflipshow` / `cardfliphide` keyframes.
     top: 0;
     left: 0;
 }
-.card.flip .face-front, .card.flip .face-back {
+.card.flip > .face-front, .card.flip > .face-back {
     animation: cardflipshow 0.5s linear 1;
 }
 .card.card-close.flip, .card.card-open.flip {
     animation: cardflip 0.5s linear 1;
 }
-.card.card-close .face-front, .card.card-open .face-back {
+.card.card-close > .face-front, .card.card-open > .face-back {
     visibility: hidden;
 }
-.card.card-close.flip .face-front, .card.card-open.flip .face-back {
+.card.card-close.flip > .face-front, .card.card-open.flip > .face-back {
     animation: cardfliphide 0.5s linear 1;
 }
 
 @keyframes cardflip {
     0%, 100% {
         transform: scaleX(1);
+        pointer-events: none;
     }
     50% {
         transform: scaleX(0);
@@ -260,11 +261,13 @@ the `cardflipshow` / `cardfliphide` keyframes.
     0%, 49% {
         visibility: visible;
         opacity: 0;
+        pointer-events: none;
     }
     
     50%, 100% {
         visibility: visible;
         opacity: 1;
+        pointer-events: none;
     }
 }
 
@@ -272,11 +275,13 @@ the `cardflipshow` / `cardfliphide` keyframes.
     0%, 49% {
         visibility: visible;
         opacity: 1;
+        pointer-events: none;
     }
     
     50%, 100% {
         visibility: visible;
         opacity: 0;
+        pointer-events: none;
     }
 }
 

@@ -1,13 +1,13 @@
 # Card Game Template
 
-A lightweight, zero-dependency template for building card games with plain HTML elements. No canvas, no frameworks — just DOM nodes styled with CSS and wired together with vanilla JavaScript.
+A lightweight, zero-dependency template for building card games with plain HTML elements. No canvas, no frameworks, just DOM nodes styled with CSS and wired together with vanilla JavaScript.
 
 ## Overview
 
 The template provides two core building blocks exposed on a global `CT` object:
 
-- **`CT.Card`** — A playing card backed by a `<div>`. Supports front/back faces, flip animations, highlights, background images, context menus, and customisable DOM via a `createDom` override.
-- **`CT.Slot`** — A container that holds a set of cards. Slots handle layout (horizontal, vertical, or stacked) and auto-tidy cards when the pile changes.
+- **`CT.Card`** A playing card backed by a `<div>`. Supports front/back faces, flip animations, highlights, background images, context menus, and customisable DOM via a `createDom` override.
+- **`CT.Slot`** A container that holds a set of cards. Slots handle layout (horizontal, vertical, or stacked) and auto-tidy cards when the pile changes.
 
 Cards are moved between slots with `card.move(slot)` (or the lower-level `CT.cardMove()`), which updates both the data model and the DOM in one call.
 
@@ -15,7 +15,7 @@ Cards are moved between slots with `card.move(slot)` (or the lower-level `CT.car
 
 | File | Description |
 |---|---|
-| `cards.js` | Core logic — `Card` class, `Slot` class, move helpers, menu system |
+| `cards.js` | Core logic. `Card` class, `Slot` class, move helpers, menu system |
 | `cards.css` | All card, slot, and animation styles driven by `--cardwidth` / `--cardheight` custom properties |
 | `examples/solitaire.html` | A playable Klondike Solitaire built entirely on the template |
 
@@ -94,13 +94,13 @@ card.move(hand);
 | `.card-highlight` | Gold glow effect on a card |
 | `.cardmenu` / `.cardmenuitem` | Context menu anchored to a card |
 
-## Example — Klondike Solitaire
+## Example: Klondike Solitaire
 
 [**Play Solitaire**](https://hanaddi.github.io/Card-Game-Template/examples/solitaire.html)
 
 [![Solitaire screenshot](https://raw.githubusercontent.com/hanaddi/Card-Game-Template/refs/heads/main/images/screenshot1.png)](https://hanaddi.github.io/Card-Game-Template/examples/solitaire.html)
 
-A full Klondike Solitaire game built entirely on the template (`examples/solitaire.html`). Demonstrates card creation with custom DOM, slot nesting (cards containing child slots for tableau columns), drag-and-drop movement, face flipping, and win detection.
+A full Klondike Solitaire game built entirely on the template. Demonstrates card creation with custom DOM, slot nesting (cards containing child slots for tableau columns), drag-and-drop movement, face flipping, and win detection.
 
 ## License
 

@@ -16,6 +16,7 @@
             overflow: visible;
             border: none;
             outline: 2px solid black;
+            touch-action: none;
         }
 
         .card:hover {
@@ -236,6 +237,8 @@
         }
 
         function isAllowDropFoundation(card, slot) {
+            if (!card.childSlot) return false;
+            if (card.childSlot.pile.size > 0) return false;
             if (slot.pile.size === 0) return card.solIndex == 1;
 
             const lastCard = [...slot.pile].at(-1);
@@ -348,6 +351,21 @@
 
         }
 
+        function cardFuncOnPointerCancel(ev) {
+            for (const slotHover of slotsHover) {
+                slotHover.domPile.classList.remove("deckallow");
+            }
+            slotsHover.clear();
+
+            if (!cardMoving) return;
+            let el = cardMoving;
+            cardMoving = null;
+            el.style.removeProperty("transition-duration");
+            el.style["z-index"] = el.ctCard.slotIndex;
+            el.style.left = el.ctCard.left + "px";
+            el.style.top = el.ctCard.top + "px";
+        }
+
 
 
         // SETUP
@@ -409,6 +427,7 @@
             card.dom.addEventListener("pointerdown", cardFuncOnPointerDown);
             card.dom.addEventListener("pointermove", cardFuncOnPointerMove);
             card.dom.addEventListener("pointerup", cardFuncOnPointerUp);
+            card.dom.addEventListener("pointercancel", cardFuncOnPointerCancel);
             // card.move(slot_waste);
             return card;
         };

@@ -248,6 +248,7 @@
         }
 
         function cardFuncOnPointerDown(ev) {
+            if (cardMoving) return;
             let el = ev.target;
             while (!el.ctCard) {
                 if (!el.parentElement) return;

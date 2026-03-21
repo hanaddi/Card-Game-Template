@@ -62,6 +62,13 @@
             this.slot = null;
         }
 
+        get _dom() {
+            if (!this.dom) {
+                this.createDom();
+            }
+            return this.dom;
+        }
+
         /**
          * Builds (or rebuilds) the card's DOM element, assigning a unique ID on the
          * first call and rendering the card name, background image, and background color.
@@ -202,6 +209,7 @@
         }
     }
 
+    // TODO: Add documentation for this class
     class Slot {
         static instances = [];
 
@@ -214,6 +222,7 @@
             this.domType = options.domType;
             this.domPile = options.domPile;
             this.slotName = options.slotName;
+            this.isAllowSwap = options.isAllowSwap ?? false;
 
             this.domSelector = null;
             this.domPile.ctSlot = this;
@@ -223,13 +232,14 @@
 
             this.pile = new Set(options.pile || []);
 
-            this.widthCard = options.widthCard ?? 3;
+            this.widthCard = options.widthCard ?? 1;
             this.heightCard = options.heightCard ?? 1;
 
             this.domPile.style.width = (this.widthCard * CT.Card.cardWidth) + "px";
             this.domPile.style.height = (this.heightCard * CT.Card.cardHeight) + "px";
         }
 
+        // TODO: Add documentation for this method
         tidy() {
             if (this.heightCard > 1) {
                 this.tidyY();
@@ -251,6 +261,7 @@
             }
         }
 
+        // TODO: Add documentation for this method
         tidyX() {
             const slot = this;
             if (slot.pile.size === 0) return;
@@ -278,6 +289,7 @@
             }
         }
 
+        // TODO: Add documentation for this method
         tidyY() {
             const slot = this;
             if (slot.pile.size === 0) return;
@@ -304,6 +316,188 @@
                 card.dom.style.removeProperty("transition-duration");
             }
         }
+    }
+
+    class Dragger {
+        offsetX = 0;
+        offsetY = 0;
+        cardMoving = null;
+        slotsHover = new Set();
+
+        constructor(args = {}) {
+            const options = {
+                ...args,
+            };
+            this.cards = new Set(options.cards || []);
+            this.slots = new Set(options.slots || []);
+
+            this.isCardAllowPick = options.isCardAllowPick ?? (() => true)
+            this.isSlotAllowDrop = options.isSlotAllowDrop ?? (() => true)
+
+            for (const card of this.cards) {
+                this.prepareCard(card);
+            }
+
+            for (const slot of this.slots) {
+                this.prepareSlot(slot);
+            }
+        }
+
+        addCards() {
+            for (const card of arguments) {
+                this.cards.add(card);
+                this.prepareCard(card);
+            }
+        }
+
+        prepareCard(card) {
+            // console.log("card", card);
+            card.isAllowPick = () => this.isCardAllowPick(card);
+
+            if (!card.dom) {
+                card.createDom();
+            }
+            
+            card.dom.addEventListener("pointerdown",   this.cardFuncOnPointerDown.bind(this));
+            card.dom.addEventListener("pointermove",   this.cardFuncOnPointerMove.bind(this));
+            card.dom.addEventListener("pointerup",     this.cardFuncOnPointerUp.bind(this));
+            card.dom.addEventListener("pointercancel", this.cardFuncOnPointerCancel.bind(this));
+        }
+
+        prepareSlot(slot) {
+            slot.isAllowDrop = (card) => this.isSlotAllowDrop(slot, card)
+        }
+        
+        cardFuncOnPointerDown(ev) {
+            if (this.cardMoving) return;
+            let el = ev.target;
+            while (!el.ctCard) {
+                if (!el.parentElement) return;
+                el = el.parentElement;
+            }
+            if (!el.ctCard.isAllowPick()) return;
+
+            el.style["transition-duration"] = "0s";
+            el.classList.remove("flip");
+            el.style["z-index"] = CT.Card.maxCards;
+            el.style["animation"] = "none";
+            el.setPointerCapture(ev.pointerId);
+            this.cardMoving = el;
+
+            this.offsetX = ev.clientX;
+            this.offsetY = ev.clientY;
+        }
+
+        slotsHoverUpdate(x, y) {
+            const elsHover = document.elementsFromPoint(x, y);
+            const slotsHoverNew = new Set();
+            for (const elHover of elsHover) {
+                if (!elHover.ctSlot) {
+                    // Not a slot
+                    continue;
+                }
+                const slot = elHover.ctSlot;
+                if (!slot.isAllowDrop(this.cardMoving.ctCard)) {
+                    continue;
+                }
+
+                slot.domPile.classList.add("deckallow");
+                slotsHoverNew.add(slot);
+            }
+            for (const slotHover of this.slotsHover) {
+                if (!slotsHoverNew.has(slotHover)) {
+                    slotHover.domPile.classList.remove("deckallow");
+                }
+            }
+            this.slotsHover = slotsHoverNew;
+        }
+
+        slotsHoverReset() {
+            for (const slotHover of this.slotsHover) {
+                slotHover.domPile.classList.remove("deckallow");
+            }
+            this.slotsHover.clear();
+
+        }
+
+        cardFuncOnPointerMove(ev) {
+            if (ev.pressure === 0) {
+                this.cardMoving = null;
+                return;
+            }
+            if (!this.cardMoving) {
+                return;
+            }
+            this.slotsHoverUpdate(ev.clientX, ev.clientY);
+
+            const tx = ev.clientX - this.offsetX;
+            const ty = ev.clientY - this.offsetY;
+            this.cardMoving.ctCard.style["z-index"] = CT.Card.maxCards;
+            this.cardMoving.ctCard.left ??= 0;
+            this.cardMoving.ctCard.top  ??= 0;
+            this.cardMoving.style.left = (this.cardMoving.ctCard.left + tx) + "px";
+            this.cardMoving.style.top  = (this.cardMoving.ctCard.top + ty) + "px";
+        }
+
+        cardFuncOnPointerUp(ev) {
+            this.slotsHoverReset();
+            if (!this.cardMoving) {
+                return;
+            }
+
+            let el = this.cardMoving;
+            this.cardMoving = null;
+            el.style.pointerEvents = "none";
+
+            const targets = document.elementsFromPoint(ev.clientX, ev.clientY);
+            el.style.removeProperty("pointer-events");
+            let isTidy = true;
+            for (const target of targets) {
+                if (!target.ctSlot) continue;
+                if (el.ctCard.slot == target.ctSlot) continue; // to itself
+                if (!target.ctSlot.isAllowDrop(el.ctCard)) continue; // not allowed
+            //     if (target.ctSlot.pile.size >= target.ctSlot.size) {
+            //         isTidy = false;
+            //         continue; // full
+            //     }
+
+                if (target.ctSlot.pile.size >= target.ctSlot.size && target.ctSlot.isAllowSwap) {
+                    // Swap the first card
+                    const card = [...target.ctSlot.pile][0];
+                    const slot = el.ctCard.slot;
+                    window.setTimeout(card.move.bind(card), 10, slot);
+                }
+
+                const tx = ev.clientX - this.offsetX;
+                const ty = ev.clientY - this.offsetY;
+                el.ctCard.left += tx;
+                el.ctCard.top += ty;
+
+                el.style.removeProperty("transition-duration");
+                el.ctCard.move(target.ctSlot);
+                return;
+            }
+
+            el.style.removeProperty("transition-duration");
+            if (isTidy) {
+                el.ctCard.slot.tidy();
+            }
+            el.style["z-index"] = el.ctCard.slotIndex;
+            el.style.left = el.ctCard.left + "px";
+            el.style.top = el.ctCard.top + "px";
+
+        }
+
+        cardFuncOnPointerCancel(ev) {
+            this.slotsHoverReset();
+            if (!this.cardMoving) return;
+            this.cardMoving.style.removeProperty("transition-duration");
+            this.cardMoving.style["z-index"] = this.cardMoving.ctCard.slotIndex;
+            this.cardMoving.style.left = this.cardMoving.ctCard.left + "px";
+            this.cardMoving.style.top  = this.cardMoving.ctCard.top  + "px";
+            this.cardMoving = null;
+        }
+
     }
 
 
@@ -371,6 +565,7 @@
     window.CT = {
         Card: Card,
         Slot: Slot,
+        Dragger: Dragger,
         cardMove: cardMove,
         domMenuShow: domMenuShow,
     };

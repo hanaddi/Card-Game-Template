@@ -52,6 +52,7 @@
             this.imgBg = options.imgBg;
             this.isOpen = options.isOpen;
             this.style = options.style;
+            this.onAfterMove = options.onAfterMove || null;
 
             if (options.createDom) {
                 this.createDom = options.createDom;
@@ -151,7 +152,13 @@
          * @param {Slot|null} [slotTarget=null] - The destination slot.
          */
         move(slotTarget = null) {
-            return cardMove(this, this.slot || null, slotTarget);
+            const moveResult = cardMove(this, this.slot || null, slotTarget);
+
+            if (this.onAfterMove) {
+                this.onAfterMove();
+            }
+
+            return moveResult;
         }
 
         /**
@@ -207,6 +214,31 @@
         highlightOff() {
             this.dom.classList.remove("card-highlight");
         }
+
+        /**
+         * Destroys this card instance, removing it from its slot, detaching its
+         * DOM element, and nullifying all references for garbage collection.
+         */
+        destroy() {
+            if (this.slot) {
+                this.move(null);
+                // this.slot.pile.delete(this);
+                // this.slot.tidy();
+                // this.slot = null;
+            }
+
+            if (this.dom) {
+                this.dom.ctCard = null;
+                this.dom.remove();
+                this.dom = null;
+            }
+
+            this.domFront = null;
+            this.domBack = null;
+            this.domMenu = null;
+            this.domMenuMove = null;
+            this.uid = null;
+        }
     }
 
     // TODO: Add documentation for this class
@@ -237,6 +269,33 @@
 
             this.domPile.style.width = (this.widthCard * CT.Card.cardWidth) + "px";
             this.domPile.style.height = (this.heightCard * CT.Card.cardHeight) + "px";
+        }
+
+        /**
+         * Destroys this slot instance, removing all cards from the pile,
+         * detaching itself from {@link Slot.instances}, and cleaning up DOM references.
+         */
+        destroy() {
+            for (const card of this.pile) {
+                // card.slot = null;
+                // if (card.dom) {
+                //     card.dom.remove();
+                // }
+                card.destroy();
+            }
+            this.pile.clear();
+
+            const idx = Slot.instances.indexOf(this);
+            if (idx !== -1) {
+                Slot.instances.splice(idx, 1);
+            }
+
+            if (this.domPile) {
+                this.domPile.ctSlot = null;
+                this.domPile = null;
+            }
+
+            this.domSelector = null;
         }
 
         // TODO: Add documentation for this method

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arit-Math</title>
+    <link rel="stylesheet" href="../cards.css">
+    <script src="../cards.js"></script>
+
+    <style>
+        .deck-slide {
+            position: relative;
+            width: 900px;
+            height: 600px;
+            background-color: green;
+            overflow: hidden;
+            --swipe-duration: 300ms;
+            touch-action: none;
+        }
+
+        .slide {
+            position: absolute;
+            width: inherit;
+            height: inherit;
+        }
+
+        .slide {
+            animation: show-slide var(--swipe-duration) linear 1;
+            top: 0%;
+            z-index: 2;
+        }
+
+        #toggleslide:checked~.deck-slide #slide2,
+        #toggleslide:not(:checked)~.deck-slide #slide1 {
+            animation: hide-slide var(--swipe-duration) linear 1;
+            z-index: 1;
+            top: -100%;
+        }
+
+        @keyframes hide-slide {
+            0% {
+                top: 0;
+                z-index: 2;
+            }
+
+            98% {
+                top: 100%;
+                z-index: 2;
+            }
+
+            99% {
+                top: 100%;
+                z-index: 1;
+            }
+
+            100% {
+                top: -100%;
+                z-index: 1;
+            }
+        }
+
+        @keyframes show-slide {
+            0% {
+                top: -100%;
+                z-index: 2;
+            }
+
+            98% {
+                top: 0;
+                z-index: 2;
+            }
+        }
+
+        .bank {
+            position: absolute; bottom: 10px; width: 100%;
+        }
+
+        #slot1, #slot2 {
+            margin: auto auto;
+        }
+
+        #works1, #works2 {
+            position: absolute; top: 10px; width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
+
+    <style>
+        .card {
+            /* transition-duration: 0s; */
+            position: absolute;
+            box-sizing: border-box;
+            overflow: visible;
+            border: none;
+            outline: 2px solid black;
+            touch-action: none;
+        }
+        .card .face-front span:nth-child(1){
+            font-size: 3rem;
+            font-family: cursive;
+        }
+
+        .deckempty {
+            position: relative;
+            margin: auto 3px;
+        }
+
+        .deckallow {
+            outline: solid 5px limegreen;
+        }
+
+        .deckselect {
+            outline: solid 5px orange;
+        }
+
+        * {
+            -webkit-user-select: none;
+            /* Safari */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* IE 10 and IE 11 */
+            user-select: none;
+            /* Standard syntax */
+        }
+    </style>
+</head>
+
+<body>
+    <input type="checkbox" id="toggleslide" style="display: none;" />
+    <div class="deck-slide">
+        <div id="slide1" class="slide" style="background: burlywood">
+            <div id="works2"></div>
+            <div class="bank">
+                <div id="slot2" class="deckempty cardplaceholder" style="--text-card: '';">
+                </div>
+            </div>
+        </div>
+
+        <!-- <div id="slide2" class="slide" style="background: palevioletred; background: burlywood"> -->
+        <div id="slide2" class="slide" style="background: palevioletred;">
+            <div id="works1"></div>
+            <div class="bank">
+                <div id="slot1" class="deckempty cardplaceholder" style="--text-card: '';">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+<script>
+    const DIGIT = "DIGIT";
+    const OADD = "ADDITION";
+    const OMULL = "MULTIPLICATION";
+    const BRACKET = "BRACKET";
+
+    function lexer(exp) {
+
+        function isDigit(t) {
+            return `${t}`.match(/^[0-9]+$/);
+        }
+
+        let pool = [];
+        let nodeCurr;
+        for (let i = 0; i < exp.length; i++) {
+            const currChar = exp[i];
+            const currType = isDigit(currChar) ? DIGIT
+                : ["+", "-"].includes(currChar) ? OADD
+                    : ["*", "x", "/"].includes(currChar) ? OMULL
+                        : ["(", ")"].includes(currChar) ? BRACKET
+                            : null;
+
+            if (currType === null) {
+                throw new Error("INVALID EXPRESSION");
+                continue;
+            }
+
+            if (!nodeCurr || currType != nodeCurr.type || nodeCurr.type != DIGIT) {
+                const tmp = nodeCurr;
+                nodeCurr = { type: currType, value: currChar, prev: tmp ?? null, next: null };
+                if (tmp) tmp.next = nodeCurr;
+                pool.push(nodeCurr);
+                continue;
+            }
+
+            if (nodeCurr.type == DIGIT && currType == DIGIT) {
+                nodeCurr.value += currChar;
+                continue;
+            }
+        }
+        return pool;
+    }
+
+    function parse(exp) {
+        // LEXER
+        let pool = lexer(exp);
+        const expClean = pool.map(e => e.value).join("");
+
+        function s(a, b) {
+            if (a.type === b.type) return 0;
+
+            if (a.type === OMULL) return -1;
+            if (b.type === OMULL) return 1;
+
+            if (a.type === OADD) return -1;
+            if (b.type === OADD) return 1;
+
+            return 0;
+        };
+
+        pool.sort(s);
+
+        // console.log(pool.map(e => {const {next, prev, ...v}=e; return v}));
+
+        let opCount = 0;
+        while (true) {
+            let isHasOp = false;
+            for (const n of pool) {
+                if (n.type === OMULL && (n.prev ?? {}).type === DIGIT && (n.next ?? {}).type === DIGIT) {
+                    n.value = n.value == "*" || n.value == "x" ? n.prev.value * n.next.value
+                        : n.value == "/" ? n.prev.value / n.next.value
+                            : "";
+                    n.type = DIGIT;
+
+                    n.prev.type = null;
+                    n.prev = n.prev.prev;
+                    if (n.prev) n.prev.next = n;
+
+                    n.next.type = null;
+                    n.next = n.next.next;
+                    if (n.next) n.next.prev = n;
+
+                    isHasOp = true;
+                    opCount++;
+                }
+
+                if (
+                    n.type === OADD && n.value === "-" && n.next && n.next.type === DIGIT
+                    && (!n.prev || n.prev.type !== DIGIT)
+                ) {
+                    n.next.value *= -1;
+                    n.next.prev = n.prev;
+                    if (n.prev) n.prev.next = n.next;
+                    n.type = null;
+                    isHasOp = true;
+                }
+
+                if (n.type === OADD && (n.prev ?? {}).type === DIGIT && (n.next ?? {}).type === DIGIT) {
+                    // n.value = n.value == "+" ? Number.parseInt(n.prev.value) + Number.parseInt(n.next.value)
+                    n.value = n.value == "+" ? Number.parseFloat(n.prev.value) + Number.parseFloat(n.next.value)
+                        : n.value == "-" ? n.prev.value - n.next.value
+                            : "";
+                    n.type = DIGIT;
+
+                    n.prev.type = null;
+                    n.prev = n.prev.prev;
+                    if (n.prev) n.prev.next = n;
+
+                    n.next.type = null;
+                    n.next = n.next.next;
+                    if (n.next) n.next.prev = n;
+
+                    isHasOp = true;
+                    opCount++;
+                }
+
+                if (n.type === DIGIT
+                    && (n.prev ?? {}).type === BRACKET && n.prev.value === "("
+                    && (n.next ?? {}).type === BRACKET && n.next.value === ")"
+                ) {
+                    n.prev.type = null;
+                    n.prev = n.prev.prev;
+                    if (n.prev) n.prev.next = n;
+
+                    n.next.type = null;
+                    n.next = n.next.next;
+                    if (n.next) n.next.prev = n;
+
+                    isHasOp = true;
+                }
+
+            }
+
+            if (!isHasOp) break;
+            pool = pool.filter(a => a.type);
+        }
+
+        // console.log(pool.map(e => {const {next, prev, ...v}=e; return v}));
+        if (pool.length === 1 && pool[0].type === DIGIT) return {
+            result: pool[0].value,
+            exp: expClean,
+            opCount: opCount,
+        };
+        throw new Error("INVALID");
+    }
+
+    const exp = "(2+(10/3))*6";
+    console.log(parse(exp));
+</script>
+
+<script src="mathlevel.js"></script>
+<script>
+    CT.Card.cardWidth = 100;
+    CT.Card.cardHeight = 100;
+    CT.Card.setCSS();
+    function adjustCardSize() {
+        if (level <= 10) {
+            CT.Card.cardWidth = 100;
+            CT.Card.cardHeight = 100;
+            CT.Card.setCSS();
+            return;
+        }
+        if (level <= 20) {
+            CT.Card.cardWidth = 90;
+            CT.Card.cardHeight = 90;
+            CT.Card.setCSS();
+            return;
+        }
+        CT.Card.cardWidth = 80;
+        CT.Card.cardHeight = 80;
+        CT.Card.setCSS();
+    }
+
+    let level = Math.max(1, localStorage.getItem("level"));
+    adjustCardSize();
+
+    const toggleslide = document.getElementById("toggleslide");
+
+    const scenes = [
+        {
+            domWorks: document.getElementById("works1"),
+            domPile: document.querySelector("#slot1"),
+        },
+        {
+            domWorks: document.getElementById("works2"),
+            domPile: document.querySelector("#slot2"),
+        },
+    ];
+    let sceneIndex = 1;
+    toggleslide.checked = !sceneIndex;
+
+    function setupNextLevel() {
+        const idx = (sceneIndex + 1) % scenes.length;
+        setupLevel(scenes[idx], getWorkSheet(level+1));
+    }
+
+    function goNextLevel() {
+        toggleslide.checked = !toggleslide.checked;
+        const sceneOld = scenes[sceneIndex];
+        sceneIndex = (sceneIndex + 1) % scenes.length;
+        level++;
+        localStorage.setItem("level", level);
+        adjustCardSize();
+        window.setTimeout(function() {
+            // console.log(sceneOld.worksTable);
+            for (const workTable of sceneOld.worksTable || []) {
+                for (const slot of workTable.slots) {
+                    slot.destroy();
+                }
+            }
+            if (sceneOld.slotDeck) {
+                // console.log(sceneOld.slotDeck);
+                sceneOld.slotDeck.destroy();
+            }
+            sceneOld.domWorks.innerHTML = "";
+            setupNextLevel();
+        }, 400);
+    }
+
+    const setupLevel = function(options, levelSheet) {
+        levelSheet ??= {
+            cards: [
+                { cardType: "number", value: "2", id: "c1" },
+                { cardType: "operator", value: "+", id: "c2" },
+                { cardType: "number", value: "3", id: "c3" },
+                { cardType: "equation", value: "=", id: "c4" },
+                { cardType: "number", value: "5", id: "c5" },
+            ],
+            stock: {
+                width: 5,
+            },
+            works: [
+                {
+                    slots: [
+                        { pickable: true, pile: [] },
+                        { pickable: false, pile: ["c2"] },
+                        { pickable: true, pile: [] },
+                        { pickable: false, pile: ["c4"] },
+                        { pickable: false, pile: ["c5"] },
+                    ],
+                },
+            ],
+        };
+        const { domWorks, domPile } = options;
+        // domWorks ??= document.getElementById("works1");
+    
+        const cards = {};
+        for (const cardData of levelSheet.cards) {
+            const card = new CT.Card({
+                cardName: cardData.value,
+            });
+            card.createDom();
+            card.dom.style.width = CT.Card.cardWidth + "px";
+            card.dom.style.height = CT.Card.cardHeight + "px";
+            Object.assign(card, cardData);
+            cards[cardData.id] = card;
+        }
+    
+        const slot1 = new CT.Slot({
+            pile: [],
+            size: levelSheet.cards.length,
+            domPile: domPile,
+            slotName: "slot1",
+            widthCard: levelSheet.stock.width,
+        });
+        slot1.pickable = true;
+        options.slotDeck = slot1;
+    
+        const worksTable = [];
+        options.worksTable = worksTable;
+        for (const work of levelSheet.works) {
+            const workTable = {
+                slots: [],
+            };
+            worksTable.push(workTable);
+            // const domRow = domWorks; // adjust later for mutiple rows
+            const domRow = document.createElement("div");
+            domWorks.appendChild(domRow);
+            domRow.style.display = "flex";
+            domRow.style["justify-content"] = "center";
+            for (const slotData of work.slots) {
+                const dom = document.createElement("div");
+                dom.classList.add("deckempty");
+                domRow.appendChild(dom);
+    
+                const slot = new CT.Slot({
+                    size: 1,
+                    widthCard: 1,
+                    domPile: dom,
+                    isAllowSwap: true,
+                    // slotName: "slot_stock",
+                });
+                slot.pickable = !!slotData.pickable;
+                workTable.slots.push(slot);
+    
+                for (const cardId of slotData.pile) {
+                    if (!cards[cardId]) continue;
+                    cards[cardId].move(slot);
+                }
+            }
+        }
+    
+        const isComplete = function() {
+            for (const workTable of worksTable) {
+                let text = "";
+                for (const slot of workTable.slots) {
+                    // if (!slot.pickable) continue;
+                    if (slot.size === 0) continue;
+                    if (slot.pile.size === 0) return false;
+                    text += [...slot.pile][0].value;
+                    slot.domPile.classList.remove("deckselect");
+                }
+                const expressions = text.split("=");
+                if (expressions.length !== 2) return false;
+                try {
+                    const val1 = parse(expressions[0]);
+                    const val2 = parse(expressions[1]);
+                    if (val1.result != val2.result) return false;
+                    for (const slot of workTable.slots) {
+                        slot.domPile.classList.add("deckselect");
+                    }
+                } catch(e) {
+                    console.error(e, expressions);
+                    return false;
+                }
+            }
+    
+            return true;
+        }
+
+        const checkComplete = function() {
+            const completed = isComplete();
+            if (!completed) {
+                return;
+            }
+            
+            for (const workTable of worksTable) {
+                for (const slot of workTable.slots) {
+                    slot.domPile.classList.add("deckselect");
+                }
+            }
+
+            window.setTimeout(() => {
+                goNextLevel();
+            }, 1000);
+        }
+    
+        for (const card of Object.values(cards)) {
+            if (!card.slot) {
+                card.move(slot1);
+            }
+            card.onAfterMove = checkComplete.bind(card);
+        }
+    
+        const isSlotAllowDrop = function (slot, card) {
+            if (!slot.pickable) return false;
+            if (slot.pile.size >= slot.size && !slot.isAllowSwap) return false;
+            return true;
+        }
+    
+        const isCardAllowPick = function (card) {
+            if (card.slot && !card.slot.pickable) return false;
+            return true;
+        }
+    
+        const dragger = new CT.Dragger({
+            slots: [slot1, ...worksTable.map(w => w.slots).flat()],
+            cards: Object.values(cards),
+            isSlotAllowDrop: isSlotAllowDrop,
+            isCardAllowPick: isCardAllowPick,
+        });
+    }
+
+    window.setTimeout(function() {
+        setupLevel(scenes[sceneIndex], getWorkSheet(level));
+    }, 400);
+
+    window.setTimeout(function() {
+        toggleslide.checked = !!sceneIndex;
+        window.setTimeout(function() {
+            setupNextLevel();
+        }, 400);
+    }, 1000);
+
+
+</script>
+
+</html>

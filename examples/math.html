@@ -17,6 +17,7 @@
             overflow: hidden;
             --swipe-duration: 300ms;
             touch-action: none;
+            margin: auto;
         }
 
         .slide {
@@ -323,8 +324,14 @@
             CT.Card.setCSS();
             return;
         }
-        CT.Card.cardWidth = 80;
-        CT.Card.cardHeight = 80;
+        if (level <= 40) {
+            CT.Card.cardWidth = 80;
+            CT.Card.cardHeight = 80;
+            CT.Card.setCSS();
+            return;
+        }
+        CT.Card.cardWidth = 60;
+        CT.Card.cardHeight = 60;
         CT.Card.setCSS();
     }
 

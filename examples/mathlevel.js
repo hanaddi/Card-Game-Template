@@ -502,7 +502,7 @@ function combineWorkSheet(sheet1, sheet2) {
         });
     }
 
-    stockWidth = Math.min(10, stockWidth);
+    stockWidth = Math.min(12, stockWidth);
     const levelSheet = {
         cards: cards.sort(() => Math.random() < .5? 1 : -1),
         stock: {

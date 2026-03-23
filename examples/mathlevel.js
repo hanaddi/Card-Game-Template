@@ -450,7 +450,7 @@ function getWorkSheetMul2(level, numDumies=null) {
             {
                 slots: [
                     ...number1Cards.map(c => ({ pickable: true, pile: [] })),
-                    { pickable: true, pile: [] }, // cardOp.id
+                    { pickable: true, pile: [cardOp.id] }, // cardOp.id
                     ...number2Cards.map(c => ({ pickable: true, pile: [] })),
                     { pickable: false, pile: [cardEqu.id] },
                     ...resultCards.map(c => ({ pickable: false, pile: [c.id] })),

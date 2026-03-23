@@ -74,7 +74,7 @@ function getWorkSheet2(level, numDumies=null) {
     const cardOp = { cardType: "operator", value: "+", id: `c${cards.length}` };
     cards.push(cardOp);
 
-    const result = 2 + Math.floor(Math.random() * 98);
+    const result = 11 + Math.floor(Math.random() * 89);
     const number1 = 1 + Math.floor(Math.random() * 9);
     const number2 = result - number1;
 

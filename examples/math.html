@@ -174,7 +174,7 @@
             const currChar = exp[i];
             const currType = isDigit(currChar) ? DIGIT
                 : ["+", "-"].includes(currChar) ? OADD
-                    : ["*", "x", "/"].includes(currChar) ? OMULL
+                    : ["*", "/"].includes(currChar) ? OMULL
                         : ["(", ")"].includes(currChar) ? BRACKET
                             : null;
 
@@ -200,6 +200,9 @@
     }
 
     function parse(exp) {
+        exp = exp.replaceAll("×", "*");
+        exp = exp.replaceAll("÷", "/");
+
         // LEXER
         let pool = lexer(exp);
         const expClean = pool.map(e => e.value).join("");
@@ -225,7 +228,7 @@
             let isHasOp = false;
             for (const n of pool) {
                 if (n.type === OMULL && (n.prev ?? {}).type === DIGIT && (n.next ?? {}).type === DIGIT) {
-                    n.value = n.value == "*" || n.value == "x" ? n.prev.value * n.next.value
+                    n.value = n.value == "*" ? n.prev.value * n.next.value
                         : n.value == "/" ? n.prev.value / n.next.value
                             : "";
                     n.type = DIGIT;
@@ -463,31 +466,44 @@
         }
     
         const isComplete = function() {
+            let completed = true;
             for (const workTable of worksTable) {
                 let text = "";
                 for (const slot of workTable.slots) {
                     // if (!slot.pickable) continue;
+                    if (slot.domPile) {
+                        slot.domPile.classList.remove("deckselect");
+                    }
                     if (slot.size === 0) continue;
-                    if (slot.pile.size === 0) return false;
+                    if (slot.pile.size === 0) {
+                        completed &&= false;
+                        text += "=1=2=3=4=";
+                        continue;
+                    }
                     text += [...slot.pile][0].value;
-                    slot.domPile.classList.remove("deckselect");
                 }
                 const expressions = text.split("=");
-                if (expressions.length !== 2) return false;
+                if (expressions.length !== 2) {    
+                    completed &&= false;
+                    continue;
+                }
                 try {
                     const val1 = parse(expressions[0]);
                     const val2 = parse(expressions[1]);
-                    if (val1.result != val2.result) return false;
+                    if (val1.result != val2.result) {
+                        completed &&= false;
+                        continue;
+                    }
                     for (const slot of workTable.slots) {
                         slot.domPile.classList.add("deckselect");
                     }
                 } catch(e) {
                     console.error(e, expressions);
-                    return false;
+                    completed &&= false;
                 }
             }
     
-            return true;
+            return completed;
         }
 
         const checkComplete = function() {
@@ -537,12 +553,25 @@
         setupLevel(scenes[sceneIndex], getWorkSheet(level));
     }, 400);
 
-    window.setTimeout(function() {
+    // HOME
+    const sceneHomeIdx = (sceneIndex + 1) % scenes.length;
+    const sceneHome = scenes[sceneHomeIdx];
+    const btnPlay = document.createElement("button");
+    btnPlay.classList.add("card");
+    btnPlay.textContent = "►";
+    sceneHome.domPile.appendChild(btnPlay);
+    const title = document.createElement("h1");
+    title.textContent = "Ini Judul";
+    sceneHome.domWorks.appendChild(title);
+
+    btnPlay.onclick = function() {
+        title.remove();
+        btnPlay.remove();
         toggleslide.checked = !!sceneIndex;
         window.setTimeout(function() {
             setupNextLevel();
         }, 400);
-    }, 1000);
+    }
 
 
 </script>

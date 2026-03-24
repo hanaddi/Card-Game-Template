@@ -594,6 +594,154 @@ function getWorkSheetDiv2(level, numDumies=null) {
     return levelSheet;
 }
 
+function getWorkSheetCombi1(level, numDumies=null) {
+    const cards = [];
+    const cardEqu = { cardType: "equation", value: "=", id: `c${cards.length}` };
+    cards.push(cardEqu);
+
+    const numbers   = [1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()<.5?1:-1);
+    const operators = ["+", "×"].sort(()=>Math.random()<.5?1:-1);
+    const arrTokens = [];
+
+    let numIdx = 0;
+    let oprIdx = 0;
+    
+    arrTokens.push(numbers[numIdx]);
+    for (let j = 0; j < 2; j++) {
+        if (operators[oprIdx] === "÷") {
+            let i = numIdx + 1;
+            while(numbers[i] === 0) i++;
+            arrTokens[arrTokens.length - 1] *= numbers[i];
+            numIdx = i;
+        } else {
+            numIdx++;
+        }
+        arrTokens.push(operators[oprIdx]);
+        oprIdx++;
+        arrTokens.push(numbers[numIdx]);
+    }
+    const expression = arrTokens.join("");
+    const objResult = parse(expression);
+    const result = objResult.result;
+
+    const arrExpr = expression.split("");
+    for (const c of arrExpr) {
+        const card = {value: `${c}`, id: `c${cards.length}` };
+        card.cardType = operators.includes(c)? "operator" : "number";
+        cards.push(card);
+    }
+
+    const resultArr = `${result}`.split("");
+    const resultCards = [];
+    for (const n of resultArr) {
+        const card = { value: `${n}`, id: `c${cards.length}` }
+        card.cardType = operators.includes(n)? "operator" : "number";
+        cards.push(card);
+        resultCards.push(card);
+    }
+
+    numDumies = numDumies != null ? numDumies : 2;
+    let extraNumbers = 0;
+    while (numDumies-- > 0) {
+        const n = numbers[numDumies];
+        const card = { cardType: "number", value: `${n}`, id: `c${cards.length}` }
+        cards.push(card);
+        extraNumbers++;
+    }
+
+    const levelSheet = {
+        cards: cards.sort(()=>Math.random()<.5?1:-1),
+        stock: {
+            width: Math.max(5, arrExpr.length + extraNumbers),
+        },
+        works: [
+            {
+                slots: [
+                    ...arrExpr.map(c => ({ pickable: true, pile: [] })),
+                    { pickable: false, pile: [cardEqu.id] },
+                    ...resultCards.map(c => ({ pickable: false, pile: [c.id] })),
+                ],
+            },
+        ],
+    };
+
+    return levelSheet;
+}
+
+function getWorkSheetCombi2(level, numDumies=null) {
+    const cards = [];
+    const cardEqu = { cardType: "equation", value: "=", id: `c${cards.length}` };
+    cards.push(cardEqu);
+
+    const numbers   = [1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9].sort(()=>Math.random()<.5?1:-1);
+    const operators = ["+", "-", "÷", "×"].sort(()=>Math.random()<.5?1:-1);
+    const arrTokens = [];
+
+    let numIdx = 0;
+    let oprIdx = 0;
+    
+    arrTokens.push(numbers[numIdx]);
+    for (let j = 0; j < 2; j++) {
+        if (operators[oprIdx] === "÷") {
+            let i = numIdx + 1;
+            while(numbers[i] === 0) i++;
+            arrTokens[arrTokens.length - 1] *= numbers[i];
+            numIdx = i;
+        } else {
+            numIdx++;
+        }
+        arrTokens.push(operators[oprIdx]);
+        oprIdx++;
+        arrTokens.push(numbers[numIdx]);
+    }
+    const expression = arrTokens.join("");
+    const objResult = parse(expression);
+    const result = objResult.result;
+
+    const arrExpr = expression.split("");
+    for (const c of arrExpr) {
+        const card = {value: `${c}`, id: `c${cards.length}` };
+        card.cardType = operators.includes(c)? "operator" : "number";
+        cards.push(card);
+    }
+
+    const resultArr = `${result}`.split("");
+    const resultCards = [];
+    for (const n of resultArr) {
+        const card = { value: `${n}`, id: `c${cards.length}` }
+        card.cardType = operators.includes(n)? "operator" : "number";
+        cards.push(card);
+        resultCards.push(card);
+    }
+
+    numDumies = numDumies != null ? numDumies : 2;
+    let extraNumbers = 0;
+    while (numDumies-- > 0) {
+        const n = numbers[numDumies];
+        const card = { cardType: "number", value: `${n}`, id: `c${cards.length}` }
+        cards.push(card);
+        extraNumbers++;
+    }
+
+    const levelSheet = {
+        cards: cards.sort(()=>Math.random()<.5?1:-1),
+        stock: {
+            width: Math.max(5, arrExpr.length + extraNumbers),
+        },
+        works: [
+            {
+                slots: [
+                    ...arrExpr.map(c => ({ pickable: true, pile: [] })),
+                    { pickable: false, pile: [cardEqu.id] },
+                    ...resultCards.map(c => ({ pickable: false, pile: [c.id] })),
+                ],
+            },
+        ],
+    };
+
+    return levelSheet;
+}
+
 function combineWorkSheet(sheet1, sheet2) {
     const cards = [];
     let stockWidth = 5;
@@ -648,61 +796,55 @@ function combineWorkSheet(sheet1, sheet2) {
 }
 
 function getWorkSheet(level) {
-    if (level <= 5) {
+    if (level <= 3) {
         return getWorkSheet1(level);
     }
-    if (level <= 10) {
+    if (level <= 6) {
         return getWorkSheet2(level);
     }
-
-    if (level <= 15) {
+    if (level <= 10) {
         return getWorkSheet3(level);
     }
-    if (level <= 20) {
+    if (level <= 13) {
         return getWorkSheetSub1(level);
     }
-    if (level <= 25) {
+    if (level <= 16) {
         return getWorkSheetSub3(level, 0);
     }
 
-    if (level <= 30) {
+    if (level <= 20) {
         return getWorkSheetMul1(level);
     }
-    if (level <= 35) {
+    if (level <= 25) {
         return getWorkSheetMul2(level);
     }
 
-    if (level <= 40) {
+    if (level <= 30) {
         return getWorkSheetDiv1(level);
     }
-    if (level <= 45) {
+    if (level <= 35) {
         return getWorkSheetDiv2(level);
     }
 
-    if (level <= 50) {
-        const p = [getWorkSheetMul2(level, 1), getWorkSheet1(level, 0)].sort(()=>Math.random()<.5? 1 : -1);
-        const s = combineWorkSheet(...p);
-        return s;
+    if (level <= 45) {
+        return getWorkSheetCombi1(level);
     }
-    if (level <= 55) {
-        return combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheet2(level, 0));
+    if (level <= 50) {
+        return getWorkSheetCombi2(level);
     }
     if (level <= 60) {
-        return combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheet3(level, 0));
+        return combineWorkSheet(getWorkSheetCombi2(level, 2), getWorkSheetSub3(level, 0));
     }
     
-    if (level <= 65) {
-        return combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheetSub1(level, 0));
-    }
     if (level <= 70) {
-        return combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheetSub3(level, 0));
+        return combineWorkSheet(getWorkSheetCombi2(level, 1), getWorkSheetDiv2(level, 0));
     }
     
     if (level <= 80) {
-        return combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheetDiv2(level, 0));
+        return combineWorkSheet(getWorkSheetCombi2(level, 1), getWorkSheetCombi1(level, 0));
     }
 
-    let worksheet = combineWorkSheet(getWorkSheetMul2(level, 1), getWorkSheetMul2(level, 1));
+    let worksheet = combineWorkSheet(getWorkSheetCombi1(level, 1), getWorkSheetCombi2(level, 1));
     if (level % 3 == 1) {
         worksheet = combineWorkSheet(worksheet, getWorkSheetMul1(level, 0));
     } else if (level % 3 == 2) {

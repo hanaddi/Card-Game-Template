@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>Arit-Math</title>
     <link rel="stylesheet" href="../cards.css">
     <script src="../cards.js"></script>
@@ -16,7 +17,6 @@
             background-color: green;
             overflow: hidden;
             --swipe-duration: 300ms;
-            touch-action: none;
             margin: auto;
         }
 
@@ -104,12 +104,13 @@
         }
         .card .face-front span:nth-child(1){
             font-size: 3rem;
-            font-family: cursive;
+            font-family: monospace;
         }
 
         .deckempty {
             position: relative;
             margin: auto 3px;
+            touch-action: none;
         }
 
         .deckallow {

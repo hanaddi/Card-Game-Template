@@ -101,6 +101,7 @@
             border: none;
             outline: 2px solid black;
             touch-action: none;
+            overflow: hidden;
         }
         .card .face-front span:nth-child(1){
             font-size: 3rem;
@@ -119,6 +120,18 @@
 
         .deckselect {
             outline: solid 5px orange;
+        }
+
+        .card.number .face-front {
+            background-color: rgba(172, 255, 47, 0.5);
+        }
+
+        .card.operator .face-front {
+            background-color: rgba(0, 255, 255, 0.5);
+        }
+
+        .unpickable .card .face-front {
+            background-color: lightgray;
         }
 
         * {
@@ -418,6 +431,7 @@
             card.createDom();
             card.dom.style.width = CT.Card.cardWidth + "px";
             card.dom.style.height = CT.Card.cardHeight + "px";
+            card.dom.classList.add(cardData.cardType);
             Object.assign(card, cardData);
             cards[cardData.id] = card;
         }
@@ -457,6 +471,9 @@
                     // slotName: "slot_stock",
                 });
                 slot.pickable = !!slotData.pickable;
+                if (!slot.pickable) {
+                    slot.domPile.classList.add("unpickable");
+                }
                 workTable.slots.push(slot);
     
                 for (const cardId of slotData.pile) {

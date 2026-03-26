@@ -480,10 +480,6 @@
         }
 
         cardFuncOnPointerMove(ev) {
-            if (ev.pressure === 0) {
-                this.cardMoving = null;
-                return;
-            }
             if (!this.cardMoving) {
                 return;
             }
@@ -506,6 +502,7 @@
 
             let el = this.cardMoving;
             this.cardMoving = null;
+            el.releasePointerCapture(ev.pointerId);
             el.style.pointerEvents = "none";
 
             const targets = document.elementsFromPoint(ev.clientX, ev.clientY);
@@ -550,6 +547,7 @@
         cardFuncOnPointerCancel(ev) {
             this.slotsHoverReset();
             if (!this.cardMoving) return;
+            this.cardMoving.releasePointerCapture(ev.pointerId);
             this.cardMoving.style.removeProperty("transition-duration");
             this.cardMoving.style["z-index"] = this.cardMoving.ctCard.slotIndex;
             this.cardMoving.style.left = this.cardMoving.ctCard.left + "px";

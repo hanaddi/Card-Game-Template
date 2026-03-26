@@ -196,6 +196,7 @@ The main playing card element. Sized by the `--cardwidth` /
     transition-duration: 0.5s;
     position: relative;
     overflow: hidden;
+    touch-action: none;
 }
 
 .card:hover {
